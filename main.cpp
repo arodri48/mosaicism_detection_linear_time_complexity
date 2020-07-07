@@ -11,13 +11,13 @@
 #include "DiscriminantFunctions.h"
 #include "FilterFunctions.h"
 
-void runner(const char* filename, const char* output_file_name, const char* win_size_discrim, const char* win_size_SG, const char* polynom, const char* cutoff, , const char* tolerance, const char* secondary_file_path){
+void runner(const char* filename, const char* output_file_name, const char* win_size_discrim, const char* win_size_SG, const char* polynom, const char* cutoff, const char* tolerance, const char* secondary_file_path){
 	// convert the two window sizes into integers
 	int discrim_win_size = std::stoi(win_size_discrim);
 	int sg_win_size = std::stoi(win_size_SG);
 	int poly_deg = std::stoi(polynom);
 	double mosaic_threshold = std::stod(cutoff);
-	double tol_val = std::stod(tolerance);
+	double tol_val = -1.0 * std::stod(tolerance);
 
 	// read in the input data into memory
 	std::vector<double> input_data = datafile_reader(filename);
@@ -55,16 +55,28 @@ void runner(const char* filename, const char* output_file_name, const char* win_
 	int counter = 1;
 	int counter2 = discrim_win_size;
 	bool isMosaic = true;
+	double diff = 0.0;
 	if (result_file.is_open() && secondary_file.is_open()){
 		// write out columns headers
 		result_file << "Start_Pos" << "\t" << "End_Pos"<< "\t" << "Discriminant_Value" << "\t" << "Is_Mosaic" << "\n";
+		secondary_file << "Start_Pos" << "\t" << "End_Pos"<< "\t" << "Discriminant_Value" << "\t" << "Distance from cutoff" << "\n";
 		for (auto & elem: discrim_filtered){
 			isMosaic = (elem > mosaic_threshold) ? true : false;
 			result_file << counter << "\t" <<  counter2 << "\t" << elem << "\t" << isMosaic << "\n";
+			diff = elem - mosaic_threshold;
+			if (isMosaic){
+				secondary_file << counter << "\t" <<  counter2 << "\t" << elem << "\t" << diff << "\n";
+			}
+			else{
+				if (diff > tol_val){
+					secondary_file << counter << "\t" <<  counter2 << "\t" << elem << "\t" << diff << "\n";
+				}
+			}
 			++counter;
 			++counter2;
 		}
 		result_file.close();
+		secondary_file.close();
 	}
 	else {
 		std::cout << "Unable to write to file";
@@ -73,7 +85,13 @@ void runner(const char* filename, const char* output_file_name, const char* win_
 
 int main(int argc, char* argv[]){
 	// arg 1: input_file path, arg 2: output_file path, arg 3: discriminant window size, arg 4: width of SG filter, arg 5: polynomial degree of SG filter,
-	// arg 6: threshold for demeaning an area mosaic
-	runner(argv[1], argv[2], argv[3], argv[4], argv[5], argv[6], argv[7], argv[8]);
-	return 0;
+	// arg 6: threshold for demeaning an area mosaic, arg 7: tolerance value, arg 8: secondary file name
+	if (argc == 9){
+		runner(argv[1], argv[2], argv[3], argv[4], argv[5], argv[6], argv[7], argv[8]);
+		return 0;
+	}
+	else{
+		std::cout << "Number of arguments incorrect" << std::endl;
+		return 1;
+	}
 }

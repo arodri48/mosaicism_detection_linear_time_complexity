@@ -194,9 +194,9 @@ std::map<std::string, std::vector<double>> vs_file_reader(const char* filename){
 }
 std::vector<double> discriminant_values_generator(const std::vector<double> & input_data, int window_size){
 	int slide_iterations = input_data.size() - window_size;
-	double initial_datapoints [window_size] = {};
+	std::vector<double> initial_datapoints(window_size, 0.0);
 	for (int i = 0; i != window_size; ++i){
-		initial_datapoints[i] = input_data.at(i);
+		initial_datapoints.at(i) = input_data.at(i);
 	}
 	std::vector<double> moments = initial_moment_finder(initial_datapoints, window_size);
 

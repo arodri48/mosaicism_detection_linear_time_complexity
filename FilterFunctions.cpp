@@ -4,10 +4,10 @@
 #include <cmath>
 
 //! default convergence
-static const double TINY_FLOAT = 1.0e-300;
+static const long double TINY_FLOAT = 1.0e-300;
 
-//! comfortable array of doubles
-using float_vect = std::vector<double>;
+//! comfortable array of long doubles
+using float_vect = std::vector<long double>;
 //! comfortable array of ints;
 using int_vect = std::vector<int>;
 
@@ -28,7 +28,7 @@ private:
     float_mat &operator =(const float_mat &) { return *this; };
 public:
     //! constructor with sizes
-    float_mat(const size_t rows, const size_t cols, const double def=0.0);
+    float_mat(const size_t rows, const size_t cols, const long double def=0.0);
     //! copy constructor for matrix
     float_mat(const float_mat &m);
     //! copy constructor for vector
@@ -46,7 +46,7 @@ public:
 
 
 // constructor with sizes
-float_mat::float_mat(const size_t rows,const size_t cols,const double defval)
+float_mat::float_mat(const size_t rows,const size_t cols,const long double defval)
         : std::vector<float_vect>(rows) {
     int i;
     for (i = 0; i < rows; ++i) {
@@ -124,7 +124,7 @@ void permute(float_mat &A, int_vect &idx)
  * recorded in swp. The return value is +1 or -1 depending on whether the
  * number of row swaps was even or odd respectively. */
 static int partial_pivot(float_mat &A, const size_t row, const size_t col,
-                         float_vect &scale, int_vect &idx, double tol)
+                         float_vect &scale, int_vect &idx, long double tol)
 {
     if (tol <= 0.0)
         tol = TINY_FLOAT;
@@ -133,13 +133,13 @@ static int partial_pivot(float_mat &A, const size_t row, const size_t col,
 
     // default pivot is the current position, [row,col]
     int pivot = row;
-    double piv_elem = fabs(A[idx[row]][col]) * scale[idx[row]];
+    long double piv_elem = fabs(A[idx[row]][col]) * scale[idx[row]];
 
     // loop over possible pivots below current
     int j;
     for (j = row + 1; j < A.nr_rows(); ++j) {
 
-        const double tmp = fabs(A[idx[j]][col]) * scale[idx[j]];
+        const long double tmp = fabs(A[idx[j]][col]) * scale[idx[j]];
 
         // if this elem is larger, then it becomes the pivot
         if (tmp > piv_elem) {
@@ -218,7 +218,7 @@ static void lu_forwsubst(float_mat &A, float_mat &a, bool diag=true)
  * depending on whether the number of row swaps was even or odd
  * respectively.  idx must be preinitialized to a valid set of indices
  * (e.g., {1,2, ... ,A.nr_rows()}). */
-static int lu_factorize(float_mat &A, int_vect &idx, double tol=TINY_FLOAT)
+static int lu_factorize(float_mat &A, int_vect &idx, long double tol=TINY_FLOAT)
 {
     if ( tol <= 0.0)
         tol = TINY_FLOAT;
@@ -233,7 +233,7 @@ static int lu_factorize(float_mat &A, int_vect &idx, double tol=TINY_FLOAT)
     float_vect scale(A.nr_rows());  // implicit pivot scaling
     int i,j;
     for (i = 0; i < A.nr_rows(); ++i) {
-        double maxval = 0.0;
+        long double maxval = 0.0;
         for (j = 0; j < A.nr_cols(); ++j) {
             if (fabs(A[i][j]) > maxval)
                 maxval = fabs(A[i][j]);
@@ -266,7 +266,7 @@ static int lu_factorize(float_mat &A, int_vect &idx, double tol=TINY_FLOAT)
  * Solves the inhomogeneous matrix problem with lu-decomposition. Note that
  * inversion may be accomplished by setting a to the identity_matrix. */
 static float_mat lin_solve(const float_mat &A, const float_mat &a,
-                           double tol=TINY_FLOAT)
+                           long double tol=TINY_FLOAT)
 {
     float_mat B(A);
     float_mat b(a);
@@ -329,7 +329,7 @@ float_mat operator *(const float_mat &a, const float_mat &b)
 
     for (i = 0; i < a.nr_rows(); ++i) {
         for (j = 0; j < b.nr_cols(); ++j) {
-            double sum(0.0);
+            long double sum(0.0);
             for (k = 0; k < a.nr_cols(); ++k) {
                 sum += a[i][k] * b[k][j];
             }
@@ -352,7 +352,7 @@ static float_vect sg_coeff(const float_vect &b, const size_t deg)
     int i,j;
     for (i = 0; i < rows; ++i) {
         for (j = 0; j < cols; ++j) {
-            A[i][j] = pow(double(i), double(j));
+            A[i][j] = pow((long double)(i), (long double)(j));
         }
     }
 
@@ -361,7 +361,7 @@ static float_vect sg_coeff(const float_vect &b, const size_t deg)
     for (i = 0; i < b.size(); ++i) {
         res[i] = c[0][0];
         for (j = 1; j <= deg; ++j) {
-            res[i] += c[j][0] * pow(double(i), double(j));
+            res[i] += c[j][0] * pow((long double)(i), (long double)(j));
         }
     }
     return res;
@@ -394,7 +394,7 @@ float_vect sg_smooth(const float_vect &v, const int width, const int deg)
 #pragma omp parallel for private(i,j) schedule(static)
 #endif
         for (i = 0; i < width; ++i) {
-	    const double scale = 1.0/double(i+1);
+	    const long double scale = 1.0/(long double)(i+1);
             const float_vect c1(width, scale);
             for (j = 0; j <= i; ++j) {
                 res[i]          += c1[j] * v[j];
@@ -403,7 +403,7 @@ float_vect sg_smooth(const float_vect &v, const int width, const int deg)
         }
 
         // now loop over rest of data. reusing the "symmetric" coefficients.
-	const double scale = 1.0/double(window);
+	const long double scale = 1.0/(long double)(window);
         const  float_vect c2(window, scale);
 #if defined(_OPENMP)
 #pragma omp parallel for private(i,j) schedule(static)

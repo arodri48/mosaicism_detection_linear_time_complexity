@@ -16,22 +16,22 @@ void runner(const char* filename, const char* output_file_name, const char* win_
 	int discrim_win_size = std::stoi(win_size_discrim);
 	int sg_win_size = std::stoi(win_size_SG);
 	int poly_deg = std::stoi(polynom);
-	double mosaic_threshold = std::stod(cutoff);
-	double tol_val = -1.0 * std::stod(tolerance);
+	long double mosaic_threshold = std::stold(cutoff);
+	long double tol_val = -1.0 * std::stold(tolerance);
 
 	// read in the input data into memory
-	std::vector<double> input_data = datafile_reader(filename);
+	std::vector<long double> input_data = datafile_reader(filename);
 
 	// take the first x number of values and calculate initital moments
 	int slide_iterations = input_data.size() - discrim_win_size;
-	std::vector<double> initial_datapoints(discrim_win_size, 0.0);
+	std::vector<long double> initial_datapoints(discrim_win_size, 0.0);
 	for (int i = 0; i != discrim_win_size; ++i){
 		initial_datapoints.at(i) = input_data.at(i);
 	}
-	std::vector<double> moments = initial_moment_finder(initial_datapoints, discrim_win_size);
+	std::vector<long double> moments = initial_moment_finder(initial_datapoints, discrim_win_size);
 
 	// calculate the first discriminant value and store it into a vector of discriminant values
-	std::vector<double> discriminants(slide_iterations + 1, 0.0);
+	std::vector<long double> discriminants(slide_iterations + 1, 0.0);
 	discriminants.at(0) = discriminant_function(200.0, 0.05, moments.at(1), moments.at(3), discrim_win_size);
 
 	// calculate the rest of the discriminants using a sliding window
@@ -47,7 +47,7 @@ void runner(const char* filename, const char* output_file_name, const char* win_
 	}
 
 	// apply SG filter to data
-	std::vector<double> discrim_filtered = sg_smooth(discriminants, sg_win_size, poly_deg);
+	std::vector<long double> discrim_filtered = sg_smooth(discriminants, sg_win_size, poly_deg);
 
 	// write the output filtered values to file
 	std::ofstream result_file(output_file_name);
@@ -55,7 +55,7 @@ void runner(const char* filename, const char* output_file_name, const char* win_
 	int counter = 1;
 	int counter2 = discrim_win_size;
 	bool isMosaic = true;
-	double diff = 0.0;
+	long double diff = 0.0;
 	if (result_file.is_open() && secondary_file.is_open()){
 		// write out columns headers
 		result_file << "Start_Pos" << "\t" << "End_Pos"<< "\t" << "Discriminant_Value" << "\t" << "Is_Mosaic" << "\n";

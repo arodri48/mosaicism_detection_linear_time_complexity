@@ -3,7 +3,7 @@
 
 #include <vector>
 
-std::vector<double> sg_smooth(const std::vector<double> &v, const int w, const int deg);
+std::vector<long double> sg_smooth(const std::vector<long double> &v, const int w, const int deg);
 
 
 #endif

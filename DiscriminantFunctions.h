@@ -6,14 +6,14 @@
 #include <string>
 #include <map>
 
-std::vector<double> datafile_reader(const char* filename);
-double discriminant_function(double a, double b, double M2, double M4, double size_n);
-std::vector<double> initial_moment_finder(double input_data [], int size);
-std::vector<double> initial_moment_finder(const std::vector<double> & input_data, int size);
-std::vector<double> moment_updater(double old_val, double new_val, int size, std::vector<double> initial_moments);
+std::vector<long double> datafile_reader(const char* filename);
+long double discriminant_function(long double a, long double b, long double M2, long double M4, long double size_n);
+std::vector<long double> initial_moment_finder(long double input_data [], int size);
+std::vector<long double> initial_moment_finder(const std::vector<long double> & input_data, int size);
+std::vector<long double> moment_updater(long double old_val, long double new_val, int size, std::vector<long double> initial_moments);
 std::vector<std::string> split(const std::string & s, char c);
 std::unordered_map<std::string, int> header_parser(const std::string & header, char c);
-std::map<std::string, std::vector<double>> vs_file_reader(const char* filename);
-std::vector<double> discriminant_values_generator(const std::vector<double>& input_data, int window_size);
+std::map<std::string, std::vector<long double>> vs_file_reader(const char* filename);
+std::vector<long double> discriminant_values_generator(const std::vector<long double>& input_data, int window_size);
 
 #endif

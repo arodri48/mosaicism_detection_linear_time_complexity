@@ -94,11 +94,11 @@ std::vector<long double> moment_updater(long double old_val, long double new_val
 	long double nm1_sqr = nm1 * nm1;
 	long double old_val_min_mu_sqr = old_val_min_mu * old_val_min_mu;
 	// calculate 2nd moment with old value removed
-	mom2 -= size*old_val_min_mu_sqr / nm1;
+	mom2 -= (size/nm1) * old_val_min_mu_sqr ;
 	// calculate 3rd moment with old value removed
-	mom3 -= old_val_min_mu * (nm2 * size * old_val_min_mu_sqr - 3 * mom2 * nm1) / (nm1_sqr);
+	mom3 -= (nm2 * size * old_val_min_mu_sqr - 3 * mom2 * nm1) * (old_val_min_mu / nm1_sqr);
 	// calculate 4th moment with old value removed
-	mom4 -= old_val_min_mu * (6 * mom2 * nm1 * old_val_min_mu - 4 * mom3 * nm1_sqr + size * (size * size - 3 * size + 3)*old_val_min_mu_sqr * old_val_min_mu) / (nm1_sqr * nm1);
+	mom4 -= (old_val_min_mu / (nm1_sqr * nm1))* ((6 * mom2 * nm1 * old_val_min_mu) - (4 * mom3 * nm1_sqr) + (size * (size * size - 3 * size + 3)*old_val_min_mu_sqr * old_val_min_mu));
 	// calculate the mean with old value removed
 	mean = (size * initial_moments[0] - old_val) / nm1;
 	// update the moments with the new value
@@ -106,9 +106,9 @@ std::vector<long double> moment_updater(long double old_val, long double new_val
 	long double inv_n = 1.0 / size;
 	long double A = delta * inv_n;
 	mean += A;
-	mom4 += A * (A * A * delta * nm1 * (size * (size - 3.) + 3.) + 6. * A * mom2 - 4. * mom3);
+	mom4 += A * (A * A * delta * nm1 * (size * (size - 3.0) + 3.0) + 6.0 * A * mom2 - 4.0 * mom3);
 	long double B = new_val - mean;
-	mom3 += A * (B * delta * nm2 - 3. * mom2);
+	mom3 += A * (B * delta * nm2 - 3.0 * mom2);
 	mom2 += delta * B;
 	std::vector<long double> new_moments(4,0.0);
 	new_moments.at(0) = mean;

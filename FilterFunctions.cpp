@@ -4,7 +4,7 @@
 #include <cmath>
 
 //! default convergence
-static const long double TINY_FLOAT = 1.0e-300;
+static const long double TINY_FLOAT = 1.0e-300L;
 
 //! comfortable array of long doubles
 using float_vect = std::vector<long double>;
@@ -28,7 +28,7 @@ private:
     float_mat &operator =(const float_mat &) { return *this; };
 public:
     //! constructor with sizes
-    float_mat(const size_t rows, const size_t cols, const long double def=0.0);
+    float_mat(const size_t rows, const size_t cols, const long double def=0.0L);
     //! copy constructor for matrix
     float_mat(const float_mat &m);
     //! copy constructor for vector
@@ -126,7 +126,7 @@ void permute(float_mat &A, int_vect &idx)
 static int partial_pivot(float_mat &A, const size_t row, const size_t col,
                          float_vect &scale, int_vect &idx, long double tol)
 {
-    if (tol <= 0.0)
+    if (tol <= 0.0L)
         tol = TINY_FLOAT;
 
     int swapNum = 1;
@@ -220,7 +220,7 @@ static void lu_forwsubst(float_mat &A, float_mat &a, bool diag=true)
  * (e.g., {1,2, ... ,A.nr_rows()}). */
 static int lu_factorize(float_mat &A, int_vect &idx, long double tol=TINY_FLOAT)
 {
-    if ( tol <= 0.0)
+    if ( tol <= 0.0L)
         tol = TINY_FLOAT;
 
     if ((A.nr_rows() == 0) || (A.nr_rows() != A.nr_cols())) {
@@ -233,16 +233,16 @@ static int lu_factorize(float_mat &A, int_vect &idx, long double tol=TINY_FLOAT)
     float_vect scale(A.nr_rows());  // implicit pivot scaling
     int i,j;
     for (i = 0; i < A.nr_rows(); ++i) {
-        long double maxval = 0.0;
+        long double maxval = 0.0L;
         for (j = 0; j < A.nr_cols(); ++j) {
             if (fabs(A[i][j]) > maxval)
                 maxval = fabs(A[i][j]);
         }
-        if (maxval == 0.0) {
+        if (maxval == 0.0L) {
 	  //sgs_error("lu_factorize(): zero pivot found.\n");
             return 0;
         }
-        scale[i] = 1.0 / maxval;
+        scale[i] = 1.0L / maxval;
     }
 
     int swapNum = 1;
@@ -291,12 +291,12 @@ static float_mat lin_solve(const float_mat &A, const float_mat &a,
 static float_mat invert(const float_mat &A)
 {
     const int n = A.size();
-    float_mat E(n, n, 0.0);
+    float_mat E(n, n, 0.0L);
     float_mat B(A);
     int i;
 
     for (i = 0; i < n; ++i) {
-        E[i][i] = 1.0;
+        E[i][i] = 1.0L;
     }
 
     return lin_solve(B, E);
@@ -329,7 +329,7 @@ float_mat operator *(const float_mat &a, const float_mat &b)
 
     for (i = 0; i < a.nr_rows(); ++i) {
         for (j = 0; j < b.nr_cols(); ++j) {
-            long double sum(0.0);
+            long double sum(0.0L);
             for (k = 0; k < a.nr_cols(); ++k) {
                 sum += a[i][k] * b[k][j];
             }
@@ -377,7 +377,7 @@ static float_vect sg_coeff(const float_vect &b, const size_t deg)
  * used. */
 float_vect sg_smooth(const float_vect &v, const int width, const int deg)
 {
-    float_vect res(v.size(), 0.0);
+    float_vect res(v.size(), 0.0L);
     if ((width < 1) || (deg < 0) || (v.size() < (2 * width + 2))) {
       //sgs_error("sgsmooth: parameter error.\n");
         return res;
@@ -394,7 +394,7 @@ float_vect sg_smooth(const float_vect &v, const int width, const int deg)
 #pragma omp parallel for private(i,j) schedule(static)
 #endif
         for (i = 0; i < width; ++i) {
-	    const long double scale = 1.0/(long double)(i+1);
+	    const long double scale = 1.0L/(long double)(i+1);
             const float_vect c1(width, scale);
             for (j = 0; j <= i; ++j) {
                 res[i]          += c1[j] * v[j];
@@ -403,7 +403,7 @@ float_vect sg_smooth(const float_vect &v, const int width, const int deg)
         }
 
         // now loop over rest of data. reusing the "symmetric" coefficients.
-	const long double scale = 1.0/(long double)(window);
+	const long double scale = 1.0L/(long double)(window);
         const  float_vect c2(window, scale);
 #if defined(_OPENMP)
 #pragma omp parallel for private(i,j) schedule(static)
@@ -421,8 +421,8 @@ float_vect sg_smooth(const float_vect &v, const int width, const int deg)
 #pragma omp parallel for private(i,j) schedule(static)
 #endif
     for (i = 0; i < width; ++i) {
-        float_vect b1(window, 0.0);
-        b1[i] = 1.0;
+        float_vect b1(window, 0.0L);
+        b1[i] = 1.0L;
 
         const float_vect c1(sg_coeff(b1, deg));
         for (j = 0; j < window; ++j) {
@@ -432,8 +432,8 @@ float_vect sg_smooth(const float_vect &v, const int width, const int deg)
     }
 
     // now loop over rest of data. reusing the "symmetric" coefficients.
-    float_vect b2(window, 0.0);
-    b2[width] = 1.0;
+    float_vect b2(window, 0.0L);
+    b2[width] = 1.0L;
     const float_vect c2(sg_coeff(b2, deg));
 
 #if defined(_OPENMP)

@@ -16,34 +16,34 @@ std::vector<long double> datafile_reader(const char* filename){
 	return numbers;
 }
 long double discriminant_function(long double a, long double b, long double M2, long double M4, long double size_n){
-	long double nm1 = size_n - 1.0;
+	long double nm1 = size_n - 1.0L;
 	long double m2_sqr_n = M2 * M2 * size_n;
-	long double discrim_val = ((a* m2_sqr_n * M2) - (b * M4 * nm1 * nm1 * nm1))/(nm1*m2_sqr_n) + 3.0*b;
+	long double discrim_val = ((a* m2_sqr_n * M2) - (b * M4 * nm1 * nm1 * nm1))/(nm1*m2_sqr_n) + 3.0L*b;
 	return discrim_val;
 }
 std::vector<long double> initial_moment_finder(long double input_data [], int size){
-	std::vector<long double> moments(4,0.0);
+	std::vector<long double> moments(4,0.0L);
 	int num_elem = size;
-	long double n = 0.0;
-	long double inv_n = 0.0;
-	long double val = 0.0;
-	long double delta = 0.0;
-	long double A = 0.0;
-	long double B = 0.0;
-	long double mean = 0.0;
-	long double mom2 = 0.0;
-	long double mom3 = 0.0;
-	long double mom4 = 0.0;
+	long double n = 0.0L;
+	long double inv_n = 0.0L;
+	long double val = 0.0L;
+	long double delta = 0.0L;
+	long double A = 0.0L;
+	long double B = 0.0L;
+	long double mean = 0.0L;
+	long double mom2 = 0.0L;
+	long double mom3 = 0.0L;
+	long double mom4 = 0.0L;
 	for (int i = 0; i != num_elem; ++i){
-		n = i + 1.0;
-		inv_n = 1.0 / n;
+		n += 1.0L;
+		inv_n = 1.0L / n;
 		val = input_data[i];
 		delta = val - mean;
 		A = delta * inv_n;
 		mean += A;
-		mom4 += A * (A * A * delta * i * (n * (n - 3.) + 3.) + 6. * A * mom2 - 4. * mom3);
+		mom4 += A * (A * A * delta * i * (n * (n - 3.0L) + 3.0L) + (6.0L * A * mom2) - (4.0L * mom3));
 		B = val - mean;
-    mom3 += A * (B * delta * (n - 2.) - 3. * mom2);
+    mom3 += A * (B * delta * (n - 2.0L) - 3.0L * mom2);
     mom2 += delta * B;
 	}
 	moments.at(0) = mean;
@@ -53,28 +53,28 @@ std::vector<long double> initial_moment_finder(long double input_data [], int si
 	return moments;
 }
 std::vector<long double> initial_moment_finder(const std::vector<long double> & input_data, int size){
-	std::vector<long double> moments(4,0.0);
+	std::vector<long double> moments(4,0.0L);
 	int num_elem = size;
-	long double n = 0.0;
-	long double inv_n = 0.0;
-	long double val = 0.0;
-	long double delta = 0.0;
-	long double A = 0.0;
-	long double B = 0.0;
-	long double mean = 0.0;
-	long double mom2 = 0.0;
-	long double mom3 = 0.0;
-	long double mom4 = 0.0;
+	long double n = 0.0L;
+	long double inv_n = 0.0L;
+	long double val = 0.0L;
+	long double delta = 0.0L;
+	long double A = 0.0L;
+	long double B = 0.0L;
+	long double mean = 0.0L;
+	long double mom2 = 0.0L;
+	long double mom3 = 0.0L;
+	long double mom4 = 0.0L;
 	for (int i = 0; i != num_elem; ++i){
-		n = i + 1.0;
-		inv_n = 1.0 / n;
+		n += 1.0L;
+		inv_n = 1.0L / n;
 		val = input_data.at(i);
 		delta = val - mean;
 		A = delta * inv_n;
 		mean += A;
-		mom4 += A * (A * A * delta * i * (n * (n - 3.) + 3.) + 6. * A * mom2 - 4. * mom3);
+		mom4 += A * (A * A * delta * i * (n * (n - 3.0L) + 3.0L) + 6.0L * A * mom2 - 4.0L * mom3);
 		B = val - mean;
-    mom3 += A * (B * delta * (n - 2.) - 3. * mom2);
+    mom3 += A * (B * delta * (n - 2.0L) - 3.0L * mom2);
     mom2 += delta * B;
 	}
 	moments.at(0) = mean;
@@ -84,33 +84,33 @@ std::vector<long double> initial_moment_finder(const std::vector<long double> & 
 	return moments;
 }
 std::vector<long double> moment_updater(long double old_val, long double new_val, int size, std::vector<long double> initial_moments){
-	long double nm1 = size - 1.0;
-	long double nm2 = size - 2.0;
+	long double nm1 = (long double)(size) - 1.0L;
+	long double nm2 = (long double)(size) - 2.0L;
 	long double old_val_min_mu = old_val - initial_moments[0];
 	long double mom2 = initial_moments[1];
 	long double mom3 = initial_moments[2];
 	long double mom4 = initial_moments[3];
-	long double mean = 0.0;
+	long double mean = 0.0L;
 	long double nm1_sqr = nm1 * nm1;
 	long double old_val_min_mu_sqr = old_val_min_mu * old_val_min_mu;
 	// calculate 2nd moment with old value removed
 	mom2 -= (size/nm1) * old_val_min_mu_sqr ;
 	// calculate 3rd moment with old value removed
-	mom3 -= (nm2 * size * old_val_min_mu_sqr - 3 * mom2 * nm1) * (old_val_min_mu / nm1_sqr);
+	mom3 -= (nm2 * size * old_val_min_mu_sqr - 3.0L * mom2 * nm1) * (old_val_min_mu / nm1_sqr);
 	// calculate 4th moment with old value removed
-	mom4 -= (old_val_min_mu / (nm1_sqr * nm1))* ((6 * mom2 * nm1 * old_val_min_mu) - (4 * mom3 * nm1_sqr) + (size * (size * size - 3 * size + 3)*old_val_min_mu_sqr * old_val_min_mu));
+	mom4 -= (old_val_min_mu / (nm1_sqr * nm1))* ((6.0L * mom2 * nm1 * old_val_min_mu) - (4.0L * mom3 * nm1_sqr) + (size * (size * size - 3.0L * size + 3.0L)*old_val_min_mu_sqr * old_val_min_mu));
 	// calculate the mean with old value removed
 	mean = (size * initial_moments[0] - old_val) / nm1;
 	// update the moments with the new value
 	long double delta = new_val - mean;
-	long double inv_n = 1.0 / size;
+	long double inv_n = 1.0L / (long double)(size);
 	long double A = delta * inv_n;
 	mean += A;
-	mom4 += A * (A * A * delta * nm1 * (size * (size - 3.0) + 3.0) + 6.0 * A * mom2 - 4.0 * mom3);
+	mom4 += A * (A * A * delta * nm1 * (size * (size - 3.0L) + 3.0L) + 6.0L * A * mom2 - 4.0L * mom3);
 	long double B = new_val - mean;
-	mom3 += A * (B * delta * nm2 - 3.0 * mom2);
+	mom3 += A * (B * delta * nm2 - 3.0L * mom2);
 	mom2 += delta * B;
-	std::vector<long double> new_moments(4,0.0);
+	std::vector<long double> new_moments(4,0.0L);
 	new_moments.at(0) = mean;
 	new_moments.at(1) = mom2;
 	new_moments.at(2) = mom3;
@@ -194,7 +194,7 @@ std::map<std::string, std::vector<long double>> vs_file_reader(const char* filen
 }
 std::vector<long double> discriminant_values_generator(const std::vector<long double> & input_data, int window_size){
 	int slide_iterations = input_data.size() - window_size;
-	std::vector<long double> initial_datapoints(window_size, 0.0);
+	std::vector<long double> initial_datapoints(window_size, 0.0L);
 	for (int i = 0; i != window_size; ++i){
 		initial_datapoints.at(i) = input_data.at(i);
 	}
@@ -202,8 +202,8 @@ std::vector<long double> discriminant_values_generator(const std::vector<long do
 
 
 	// calculate the first discrimanant value and store it into a vector of discrimanant values
-	std::vector<long double> discriminants(slide_iterations + 1, 0.0);
-	discriminants.at(0) = discriminant_function(200.0, 0.05, moments.at(1), moments.at(3), window_size);
+	std::vector<long double> discriminants(slide_iterations + 1, 0.0L);
+	discriminants.at(0) = discriminant_function(200.0L, 0.05L, moments.at(1), moments.at(3), window_size);
 
 
 	// implement the sliding window
@@ -216,7 +216,7 @@ std::vector<long double> discriminant_values_generator(const std::vector<long do
 		// overwrite the old moments with the new ones
 		//moments = new_moments;
 		// calculate the new discrimanant and add to vector
-		discriminants.at(i + 1) = discriminant_function(200.0, 0.05, moments.at(1), moments.at(3), window_size);
+		discriminants.at(i + 1) = discriminant_function(200.0L, 0.05L, moments.at(1), moments.at(3), window_size);
 		++old_value_index;
 		++new_value_index;
 	}

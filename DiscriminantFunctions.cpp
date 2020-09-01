@@ -8,7 +8,7 @@
 #include <map>
 #include <unordered_set>
 
-std::vector<long double> datafile_reader(const char* filename){
+std::vector<long double> datafile_reader(const std::string filename){
 	// assumes a input file with a single column of data with no headers
 	std::ifstream is(filename);
 	std::istream_iterator<long double> start(is), end;
@@ -142,6 +142,26 @@ std::unordered_map<std::string, int> header_parser(const std::string & header, c
 		header_indexes.insert(std::pair<std::string, int>(header_split.at(i), i));
 	}
 	return header_indexes;
+}
+std::unordered_map<std::string, std::string> config_reader(const char* filename){
+	// generate unordered_map to store config values in
+	std::unordered_map<std::string, std::string> config_values;
+	// open up file
+	std::string file_path(filename);
+	std::ifstream in_s(file_path);
+	std::string line;
+	std::vector<std::string> line_split;
+	if (in_s){
+		while(getline(in_s, line)){
+			line_split = split(line, '\t');
+			config_values.insert(std::pair<std::string, std::string> (line_split.at(0), line_split.at(1)));
+		}
+		in_s.close();
+	}
+	else {
+		std::cout << "Could not open: " << file_path << std::endl;
+	}
+	return config_values;
 }
 std::map<std::string, std::vector<long double>> vs_file_reader(const char* filename){
 	//open file up for reading

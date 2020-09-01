@@ -11,7 +11,7 @@
 #include "DiscriminantFunctions.h"
 #include "FilterFunctions.h"
 
-void runner(const char* filename, const char* output_file_name, const char* win_size_discrim, const char* win_size_SG, const char* polynom, const char* cutoff, const char* tolerance, const char* secondary_file_path){
+void runner(const std::string filename, const std::string output_file_name, const std::string win_size_discrim, const std::string win_size_SG, const std::string polynom, const std::string cutoff, const std::string tolerance, const std::string secondary_file_path){
 	// convert the two window sizes into integers
 	int discrim_win_size = std::stoi(win_size_discrim);
 	int sg_win_size = std::stoi(win_size_SG);
@@ -92,8 +92,10 @@ void runner(const char* filename, const char* output_file_name, const char* win_
 int main(int argc, char* argv[]){
 	// arg 1: input_file path, arg 2: output_file path, arg 3: discriminant window size, arg 4: width of SG filter, arg 5: polynomial degree of SG filter,
 	// arg 6: threshold for demeaning an area mosaic, arg 7: tolerance value, arg 8: secondary file name
+
+	std::unordered_map<std::string, std::string> config_vals = config_reader(argv[1]);
 	if (argc == 9){
-		runner(argv[1], argv[2], argv[3], argv[4], argv[5], argv[6], argv[7], argv[8]);
+		runner(config_vals.at("INPUT_FILE_PATH"), config_vals.at("OUTPUT_FILE_PATH"), config_vals.at("DISCRIMINANT_WINDOW_SIZE"), config_vals.at("SG_FILTER_WIDTH"), config_vals.at("SG_FILTER_POLYNOMIAL_DEGREE"), config_vals.at("MOSAIC_THRESHOLD"), config_vals.at("TOLERANCE_VALUE"), config_vals.at("SECONDARY_FILE_PATH"));
 		return 0;
 	}
 	else{

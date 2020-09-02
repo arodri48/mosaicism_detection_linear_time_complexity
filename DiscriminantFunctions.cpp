@@ -11,8 +11,18 @@
 std::vector<long double> datafile_reader(const std::string filename){
 	// assumes a input file with a single column of data with no headers
 	std::ifstream is(filename);
-	std::istream_iterator<long double> start(is), end;
-	std::vector<long double> numbers(start, end);
+	std::vector<long double> numbers;
+
+	std::string line;
+	if (is){
+		while(getline(is, line)){
+			numbers.push_back(std::stold(line));
+		}
+		is.close();
+	}
+	else {
+		std::cout << "Could not open: " << filename << std::endl;
+	}
 	return numbers;
 }
 long double discriminant_function(long double a, long double b, long double M2, long double M4, long double size_n){

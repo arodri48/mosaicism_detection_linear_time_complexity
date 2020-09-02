@@ -25,7 +25,7 @@ void runner(const std::string filename, const std::string output_file_name, cons
 	// take the first x number of values and calculate initital moments
 	int slide_iterations = input_data.size() - discrim_win_size;
 	if (slide_iterations < 1){
-		std::cout << "window size of " << discrim_win_size << " is bigger than the size of data " << input_data.size();
+		std::cout << "window size of " << discrim_win_size << " is bigger than the size of data " << input_data.size() << std::endl;
 	}
 	else{
 		std::vector<long double> initial_datapoints(discrim_win_size, 0.0L);
@@ -94,12 +94,8 @@ int main(int argc, char* argv[]){
 	// arg 6: threshold for demeaning an area mosaic, arg 7: tolerance value, arg 8: secondary file name
 
 	std::unordered_map<std::string, std::string> config_vals = config_reader(argv[1]);
-	if (argc == 9){
-		runner(config_vals.at("INPUT_FILE_PATH"), config_vals.at("OUTPUT_FILE_PATH"), config_vals.at("DISCRIMINANT_WINDOW_SIZE"), config_vals.at("SG_FILTER_WIDTH"), config_vals.at("SG_FILTER_POLYNOMIAL_DEGREE"), config_vals.at("MOSAIC_THRESHOLD"), config_vals.at("TOLERANCE_VALUE"), config_vals.at("SECONDARY_FILE_PATH"));
-		return 0;
-	}
-	else{
-		std::cout << "Number of arguments incorrect" << std::endl;
-		return 1;
-	}
+	std:: cout << config_vals.at("INPUT_FILE_PATH") << std::endl;
+	runner(config_vals.at("INPUT_FILE_PATH"), config_vals.at("OUTPUT_FILE_PATH"), config_vals.at("DISCRIMINANT_WINDOW_SIZE"), config_vals.at("SG_FILTER_WIDTH"), config_vals.at("SG_FILTER_POLYNOMIAL_DEGREE"), config_vals.at("MOSAIC_THRESHOLD"), config_vals.at("TOLERANCE_VALUE"), config_vals.at("SECONDARY_FILE_PATH"));
+	return 0;
+
 }

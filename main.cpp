@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <map>
 #include <unordered_set>
+#include <typeinfo>
 
 #include "DiscriminantFunctions.h"
 #include "FilterFunctions.h"
@@ -20,6 +21,7 @@ void runner(const std::string filename, const std::string output_file_name, cons
 	long double tol_val = -1.0L * std::stold(tolerance);
 
 	// read in the input data into memory
+	std::cout << filename << std::endl;
 	std::vector<long double> input_data = datafile_reader(filename);
 
 	// take the first x number of values and calculate initital moments
@@ -54,8 +56,8 @@ void runner(const std::string filename, const std::string output_file_name, cons
 		std::vector<long double> discrim_filtered = sg_smooth(discriminants, sg_win_size, poly_deg);
 
 		// write the output filtered values to file
-		std::ofstream result_file(output_file_name);
-		std::ofstream secondary_file(secondary_file_path);
+		std::ofstream result_file(output_file_name.c_str());
+		std::ofstream secondary_file(secondary_file_path.c_str());
 		int counter = 1;
 		int counter2 = discrim_win_size;
 		bool isMosaic = true;
@@ -83,7 +85,7 @@ void runner(const std::string filename, const std::string output_file_name, cons
 			secondary_file.close();
 		}
 		else {
-			std::cout << "Unable to write to file";
+			std::cout << "Unable to write to file" << std::endl;
 		}
 	}
 
@@ -94,7 +96,6 @@ int main(int argc, char* argv[]){
 	// arg 6: threshold for demeaning an area mosaic, arg 7: tolerance value, arg 8: secondary file name
 
 	std::unordered_map<std::string, std::string> config_vals = config_reader(argv[1]);
-	std:: cout << config_vals.at("INPUT_FILE_PATH") << std::endl;
 	runner(config_vals.at("INPUT_FILE_PATH"), config_vals.at("OUTPUT_FILE_PATH"), config_vals.at("DISCRIMINANT_WINDOW_SIZE"), config_vals.at("SG_FILTER_WIDTH"), config_vals.at("SG_FILTER_POLYNOMIAL_DEGREE"), config_vals.at("MOSAIC_THRESHOLD"), config_vals.at("TOLERANCE_VALUE"), config_vals.at("SECONDARY_FILE_PATH"));
 	return 0;
 

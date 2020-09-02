@@ -10,7 +10,7 @@
 
 std::vector<long double> datafile_reader(const std::string filename){
 	// assumes a input file with a single column of data with no headers
-	std::ifstream is(filename);
+	std::ifstream is(filename.c_str());
 	std::vector<long double> numbers;
 
 	std::string line;

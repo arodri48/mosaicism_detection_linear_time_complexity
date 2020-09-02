@@ -1,8 +1,8 @@
-INPUT_FILE_PATH	Q:/mosaicism_detection_linear_time_complexity/test_files/AAA.txt
-OUTPUT_FILE_PATH	Q:/mosaicism_detection_linear_time_complexity9_1_20_result_files/AAA_results_96.txt
+INPUT_FILE_PATH	test_files/AAA.txt
+OUTPUT_FILE_PATH	9_2_20_result_file/AAA_results_96.txt
 DISCRIMINANT_WINDOW_SIZE	96
 SG_FILTER_WIDTH	301
 SG_FILTER_POLYNOMIAL_DEGREE	2
 MOSAIC_THRESHOLD	0.24
 TOLERANCE_VALUE	0.05
-SECONDARY_FILE_PATH	Q:/mosaicism_detection_linear_time_complexity/9_1_20_result_files/AAA_results_96_secondary.txt
+SECONDARY_FILE_PATH	9_2_20_result_file/AAA_results_96_secondary.txt

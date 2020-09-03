@@ -12,7 +12,8 @@
 #include "DiscriminantFunctions.h"
 #include "FilterFunctions.h"
 
-void runner(const std::string filename, const std::string output_file_name, const std::string win_size_discrim, const std::string win_size_SG, const std::string polynom, const std::string cutoff, const std::string tolerance, const std::string secondary_file_path){
+using namespace std;
+void runner(const string & filename, const string &  output_file_name, const string &  win_size_discrim, const string &  win_size_SG, const string &  polynom, const string &  cutoff, const string & tolerance, const string &  secondary_file_path){
 	// convert the two window sizes into integers
 	int discrim_win_size = std::stoi(win_size_discrim);
 	int sg_win_size = std::stoi(win_size_SG);
@@ -20,10 +21,7 @@ void runner(const std::string filename, const std::string output_file_name, cons
 	long double mosaic_threshold = std::stold(cutoff);
 	long double tol_val = -1.0L * std::stold(tolerance);
 
-	// read in the input data into memory
-	std::cout << filename << std::endl;
 	std::vector<long double> input_data = datafile_reader(filename);
-
 	// take the first x number of values and calculate initital moments
 	int slide_iterations = input_data.size() - discrim_win_size;
 	if (slide_iterations < 1){
@@ -56,8 +54,8 @@ void runner(const std::string filename, const std::string output_file_name, cons
 		std::vector<long double> discrim_filtered = sg_smooth(discriminants, sg_win_size, poly_deg);
 
 		// write the output filtered values to file
-		std::ofstream result_file(output_file_name.c_str());
-		std::ofstream secondary_file(secondary_file_path.c_str());
+		std::ofstream result_file(output_file_name);
+		std::ofstream secondary_file(secondary_file_path);
 		int counter = 1;
 		int counter2 = discrim_win_size;
 		bool isMosaic = true;
@@ -96,7 +94,15 @@ int main(int argc, char* argv[]){
 	// arg 6: threshold for demeaning an area mosaic, arg 7: tolerance value, arg 8: secondary file name
 
 	std::unordered_map<std::string, std::string> config_vals = config_reader(argv[1]);
-	runner(config_vals.at("INPUT_FILE_PATH"), config_vals.at("OUTPUT_FILE_PATH"), config_vals.at("DISCRIMINANT_WINDOW_SIZE"), config_vals.at("SG_FILTER_WIDTH"), config_vals.at("SG_FILTER_POLYNOMIAL_DEGREE"), config_vals.at("MOSAIC_THRESHOLD"), config_vals.at("TOLERANCE_VALUE"), config_vals.at("SECONDARY_FILE_PATH"));
+	std::string arg1 = config_vals.at("INPUT_FILE_PATH");
+	std::string arg2 = config_vals.at("OUTPUT_FILE_PATH");
+	std::string arg3 = config_vals.at("DISCRIMINANT_WINDOW_SIZE");
+	std::string arg4 = config_vals.at("SG_FILTER_WIDTH");
+	std::string arg5 = config_vals.at("SG_FILTER_POLYNOMIAL_DEGREE");
+	std::string arg6 = config_vals.at("MOSAIC_THRESHOLD");
+	std::string arg7 = config_vals.at("TOLERANCE_VALUE");
+	std::string arg8 = config_vals.at("SECONDARY_FILE_PATH");
+	runner(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
 	return 0;
 
 }

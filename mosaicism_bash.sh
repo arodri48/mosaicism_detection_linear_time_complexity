@@ -17,4 +17,4 @@ done < $config
 
 # run python script to generate images, arguments are input file and output_directory
 
-python mosaicism_image_generator_script.py "${config_vals[OUTPUT_FILE_PATH]}" "${config_vals[IMAGE_DIRECTORY]}"
+python mosaicism_image_generator_script.py -i "${config_vals[OUTPUT_FILE_PATH]}" -o "${config_vals[IMAGE_DIRECTORY]}"

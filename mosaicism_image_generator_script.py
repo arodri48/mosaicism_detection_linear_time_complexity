@@ -19,3 +19,5 @@ def main():
 	basename = os.path.splitext(os.path.basename(args.i))[0]
 	image_path = args.o + basename +".png"
 	plt.savefig(image_path, dpi=300)
+
+main()

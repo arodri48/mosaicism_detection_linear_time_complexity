@@ -8,21 +8,43 @@
 #include <map>
 #include <unordered_set>
 #include <typeinfo>
+#include <cmath>
 
 #include "DiscriminantFunctions.h"
 #include "FilterFunctions.h"
 
 using namespace std;
-void runner(const string & filename, const string &  output_file_name, const string &  win_size_discrim, const string &  win_size_SG, const string &  polynom, const string &  cutoff, const string & tolerance, const string &  secondary_file_path){
-	// convert the two window sizes into integers
-	int discrim_win_size = std::stoi(win_size_discrim);
-	int sg_win_size = std::stoi(win_size_SG);
+void runner(const string & filename, const string &  output_file_name, const string &  win_size_discrim, const string &  win_size_SG, const string &  polynom, const string &  cutoff, const string & tolerance, const string &  secondary_file_path, const string & auto_window){
+
 	int poly_deg = std::stoi(polynom);
 	long double mosaic_threshold = std::stold(cutoff);
 	long double tol_val = -1.0L * std::stold(tolerance);
-
+	int discrim_win_size;
+	int sg_win_size;
 	std::vector<long double> input_data = datafile_reader(filename);
+	if (auto_window.compare("Y") == 0){
+		// auto window is set to true
+		int input_data_size = input_data.size();
+		long double base_win_size = floor((long double)input_data_size / 100.0L);
+		int base_int_size = (int)base_win_size;
+		if (base_int_size % 2 == 0){
+			discrim_win_size = base_int_size;
+			sg_win_size = base_int_size + 1;
+		}
+		else{
+			discrim_win_size = base_int_size - 1;
+			sg_win_size = base_int_size;
+		}
+	}
+	else{
+		// convert the two window sizes into integers
+		discrim_win_size = std::stoi(win_size_discrim);
+		sg_win_size = std::stoi(win_size_SG);
+	}
 	// take the first x number of values and calculate initital moments
+	std::cout << "Discriminant window size is " << discrim_win_size << std::endl;
+	std::cout << "SG window size is " << sg_win_size << std::endl;
+
 	int slide_iterations = input_data.size() - discrim_win_size;
 	if (slide_iterations < 1){
 		std::cout << "window size of " << discrim_win_size << " is bigger than the size of data " << input_data.size() << std::endl;
@@ -102,7 +124,8 @@ int main(int argc, char* argv[]){
 	std::string arg6 = config_vals.at("MOSAIC_THRESHOLD");
 	std::string arg7 = config_vals.at("TOLERANCE_VALUE");
 	std::string arg8 = config_vals.at("SECONDARY_FILE_PATH");
-	runner(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+	std::string arg9 = config_vals.at("AUTO_WINDOW_SIZE");
+	runner(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
 	return 0;
 
 }

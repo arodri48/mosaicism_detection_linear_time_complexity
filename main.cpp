@@ -9,11 +9,12 @@
 #include <unordered_set>
 #include <typeinfo>
 #include <cmath>
-
+#include <chrono>
 #include "DiscriminantFunctions.h"
 #include "FilterFunctions.h"
 
 using namespace std;
+using namespace std::chrono;
 void runner(const string & filename, const string &  output_file_name, const string &  win_size_discrim, const string &  win_size_SG, const string &  polynom, const string &  cutoff, const string & tolerance, const string &  secondary_file_path, const string & auto_window){
 
 	int poly_deg = std::stoi(polynom);
@@ -82,6 +83,7 @@ void runner(const string & filename, const string &  output_file_name, const str
 		int counter2 = discrim_win_size;
 		bool isMosaic = true;
 		long double diff = 0.0L;
+		bool mosaicismPresent = false;
 		if (result_file.is_open() && secondary_file.is_open()){
 			// write out columns headers
 			result_file << "Start_Pos" << "\t" << "End_Pos"<< "\t" << "Discriminant_Value" << "\t" << "Is_Mosaic" << "\n";
@@ -92,6 +94,9 @@ void runner(const string & filename, const string &  output_file_name, const str
 				diff = elem - mosaic_threshold;
 				if (isMosaic){
 					secondary_file << counter << "\t" <<  counter2 << "\t" << elem << "\t" << diff << "\n";
+					if (!mosaicismPresent){
+						mosaicismPresent = true;
+					}
 				}
 				else{
 					if (diff > tol_val){
@@ -106,6 +111,12 @@ void runner(const string & filename, const string &  output_file_name, const str
 		}
 		else {
 			std::cout << "Unable to write to file" << std::endl;
+		}
+		if (mosaicismPresent){
+			cout << "Mosaicism was detected" << endl;
+		}
+		else {
+			cout << "Mosaicism was not detected" << endl;
 		}
 	}
 
@@ -125,7 +136,11 @@ int main(int argc, char* argv[]){
 	std::string arg7 = config_vals.at("TOLERANCE_VALUE");
 	std::string arg8 = config_vals.at("SECONDARY_FILE_PATH");
 	std::string arg9 = config_vals.at("AUTO_WINDOW_SIZE");
+	auto start = high_resolution_clock::now();
 	runner(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
+	auto stop = high_resolution_clock::now();
+	auto duration = duration_cast<milliseconds>(stop - start);
+	cout << "Time taken by function: " << duration.count() << " milliseconds" << endl;
 	return 0;
 
 }

@@ -43,6 +43,7 @@ void runner(const string & filename, const string &  output_file_name, const str
 		sg_win_size = std::stoi(win_size_SG);
 	}
 	// take the first x number of values and calculate initital moments
+	cout << "Number of SNPS in dataset: " << input_data.size() << endl;
 	std::cout << "Discriminant window size is " << discrim_win_size << std::endl;
 	std::cout << "SG window size is " << sg_win_size << std::endl;
 

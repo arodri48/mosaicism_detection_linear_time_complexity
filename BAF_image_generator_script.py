@@ -9,12 +9,14 @@ def main():
 	parser.add_argument('-o', required=True)
 	args = parser.parse_args()
 	# load in the data
-	data = pd.read_csv(args.i, sep='\t')
+	data = pd.read_csv(args.i, sep='\t', header=None)
 	# create plot
-	plt.plot(data['Start_Pos'], data['Discriminant_Value'])
-	plt.ylim(0.0, 0.5)
+	rows = data[0].count()
+	row_indexes = [i for i in range(rows)]
+	plt.scatter(row_indexes, data[0])
+	plt.ylim(0.0, 1.0)
 	plt.xlabel('SNP')
-	plt.ylabel('Discriminant Value')
+	plt.ylabel('BAF')
 	# save to file
 	basename = os.path.splitext(os.path.basename(args.i))[0]
 	image_path = args.o + basename +".png"

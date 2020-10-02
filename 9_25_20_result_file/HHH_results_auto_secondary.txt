@@ -1,0 +1,1 @@
+Start_Pos	End_Pos	Discriminant_Value	Distance from cutoff

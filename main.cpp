@@ -89,17 +89,17 @@ void runner(const string & filename, const string &  output_file_name, const str
 			secondary_file << "Start_Pos" << "\t" << "End_Pos"<< "\t" << "Discriminant_Value" << "\t" << "Distance from cutoff" << "\n";
 			for (auto & elem: discrim_filtered){
 				diff = elem - mosaic_threshold;
-				if (elem > mosaic_threshold){
+				if (elem <= mosaic_threshold){
+					result_file << counter << " " << counter2 << " " << elem << " " << false << "\n";
+					if (diff > tol_val){
+						secondary_file << counter << "\t" <<  counter2 << "\t" << elem << "\t" << diff << "\n";
+					}
+				}
+				else {
 					result_file << counter << " " << counter2 << " " << elem << " " << true << "\n";
 					secondary_file << counter << "\t" <<  counter2 << "\t" << elem << "\t" << diff << "\n";
 					if (!mosaicismPresent){
 						mosaicismPresent = true;
-					}
-				}
-				else {
-					result_file << counter << " " << counter2 << " " << elem << " " << false << " ";
-					if (diff > tol_val){
-						secondary_file << counter << "\t" <<  counter2 << "\t" << elem << "\t" << diff << "\n";
 					}
 				}
 				++counter;

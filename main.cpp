@@ -28,13 +28,15 @@ void runner(const string & filename, const string &  output_file_name, const str
 		int input_data_size = input_data.size();
 		long double base_win_size = floor((long double)input_data_size / 100.0L);
 		int base_int_size = (int)base_win_size;
-		if (base_int_size % 2 == 0){
-			discrim_win_size = base_int_size;
-			sg_win_size = base_int_size + 1;
-		}
-		else{
+		if (base_int_size & 1){
+			// it's odd
 			discrim_win_size = base_int_size - 1;
 			sg_win_size = base_int_size;
+		}
+		else {
+			//it's even
+			discrim_win_size = base_int_size;
+			sg_win_size = base_int_size + 1;
 		}
 	}
 	else{
@@ -48,10 +50,7 @@ void runner(const string & filename, const string &  output_file_name, const str
 	std::cout << "SG window size is " << sg_win_size << std::endl;
 
 	int slide_iterations = input_data.size() - discrim_win_size;
-	if (slide_iterations < 1){
-		std::cout << "window size of " << discrim_win_size << " is bigger than the size of data " << input_data.size() << std::endl;
-	}
-	else{
+	if (slide_iterations > 0){
 		std::vector<long double> initial_datapoints(discrim_win_size, 0.0L);
 		for (int i = 0; i != discrim_win_size; ++i){
 			initial_datapoints.at(i) = input_data.at(i);
@@ -82,7 +81,6 @@ void runner(const string & filename, const string &  output_file_name, const str
 		std::ofstream secondary_file(secondary_file_path);
 		int counter = 1;
 		int counter2 = discrim_win_size;
-		bool isMosaic = true;
 		long double diff = 0.0L;
 		bool mosaicismPresent = false;
 		if (result_file.is_open() && secondary_file.is_open()){
@@ -90,16 +88,16 @@ void runner(const string & filename, const string &  output_file_name, const str
 			result_file << "Start_Pos" << "\t" << "End_Pos"<< "\t" << "Discriminant_Value" << "\t" << "Is_Mosaic" << "\n";
 			secondary_file << "Start_Pos" << "\t" << "End_Pos"<< "\t" << "Discriminant_Value" << "\t" << "Distance from cutoff" << "\n";
 			for (auto & elem: discrim_filtered){
-				isMosaic = (elem > mosaic_threshold) ? true : false;
-				result_file << counter << "\t" <<  counter2 << "\t" << elem << "\t" << isMosaic << "\n";
 				diff = elem - mosaic_threshold;
-				if (isMosaic){
+				if (elem > mosaic_threshold){
+					result_file << counter << " " << counter2 << " " << elem << " " << true << "\n";
 					secondary_file << counter << "\t" <<  counter2 << "\t" << elem << "\t" << diff << "\n";
 					if (!mosaicismPresent){
 						mosaicismPresent = true;
 					}
 				}
-				else{
+				else {
+					result_file << counter << " " << counter2 << " " << elem << " " << false << " ";
 					if (diff > tol_val){
 						secondary_file << counter << "\t" <<  counter2 << "\t" << elem << "\t" << diff << "\n";
 					}
@@ -119,6 +117,9 @@ void runner(const string & filename, const string &  output_file_name, const str
 		else {
 			cout << "Mosaicism was not detected" << endl;
 		}
+	}
+	else {
+		std::cout << "window size of " << discrim_win_size << " is bigger than the size of data " << input_data.size() << std::endl;
 	}
 
 }

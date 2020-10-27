@@ -13,8 +13,8 @@ def main():
 	# create plot
 	rows = data[0].count()
 	row_indexes = [i for i in range(rows)]
-	plt.scatter(row_indexes, data[0])
-	plt.ylim(0.0, 1.0)
+	plt.scatter(row_indexes, data[0], s=1)
+	plt.ylim(0.15, 0.85)
 	plt.xlabel('SNP')
 	plt.ylabel('BAF')
 	# save to file

@@ -12,8 +12,8 @@ def main():
 	data = pd.read_csv(args.i, sep='\t')
 	# create plot
 	plt.plot(data['Start_Pos'], data['Discriminant_Value'])
-	plt.ylim(0.0, 0.5)
-	plt.xlabel('SNP')
+	plt.ylim(0.0, 9)
+	plt.xlabel('Start Position')
 	plt.ylabel('Discriminant Value')
 	# save to file
 	basename = os.path.splitext(os.path.basename(args.i))[0]

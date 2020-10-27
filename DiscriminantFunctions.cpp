@@ -126,11 +126,10 @@ std::vector<std::string> split(const std::string & s, char c){
 			splitted.push_back(word);
 			word.clear();
 		}
-		else{
-			if (ch != '\r'){
-				word += ch;
-			}
+		else if (ch != '\r'){
+			word += ch;
 		}
+		
 	}
 	if(!word.empty()){
 		splitted.push_back(word);

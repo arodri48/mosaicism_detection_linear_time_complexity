@@ -78,6 +78,7 @@ class PhasingProgram{
     String curLine;
     String [] split_line;
     curLine = vsfile_reader.readLine();
+		ArrayList<long> phasable_snp_VCF_positions = new ArrayList<long>();
     this.patientNames = header_info_finder(curLine, proband, father, mother);
     while((curLine = vsfile_reader.readLine()) != null){
       split_line = curLine.split("\t");
@@ -90,7 +91,8 @@ class PhasingProgram{
 						// if none of the three are NA, save the VCF VCF_Position
 						if (!(split_line[proband_index].charAt(0) == 'N' || split_line[father_index].charAt(0) == 'N' || split_line[mother_index].charAt(0) == 'N')){
 							// save the VCF position
-
+							phasable_snp_VCF_positions.add(split_line[headerCounterVCF]);
+							// TODO: if multiple SNPS at same position, need to figure that out
 						}
 					}
 				}

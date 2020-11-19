@@ -86,8 +86,8 @@ class PhasingProgram{
 			if (split_line[headerCounterMutType].equals("SNP")){
 				// if variant is SNP, see if proband is a het
 				if (het_check(split_line[proband_index])){
-					//if proband is het, first check if at least one of the parents homozygous (not phasable if both are het)
-					if (!(het_check(split_line[father_index]) && het_check(split_line[mother_index]))){
+					//if proband is het, first check if at least one of the parents homozygous (not phasable if both are het), but it is not the case that they are homozygous for the same allele
+					if (!(het_check(split_line[father_index]) && het_check(split_line[mother_index])) && !split_line[father_index].equals(split_line[mother_index])){
 						// if none of the three are NA, save the VCF VCF_Position
 						if (!(split_line[proband_index].charAt(0) == 'N' || split_line[father_index].charAt(0) == 'N' || split_line[mother_index].charAt(0) == 'N')){
 							// save the VCF position

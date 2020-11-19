@@ -1,3 +1,5 @@
+import java.io.*;
+import java.util.*;
 class PhasingProgram{
   String [] patientNames;
 	Map <String, Integer> patientname_indices;
@@ -38,7 +40,7 @@ class PhasingProgram{
 		}
 
 		ArrayList<String> patientNames = new ArrayList<String>();
-		while(!(this.headerCounterColumns == columns)) {
+		while(this.headerCounterColumns != columns) {
 			if (headers[headerCounterColumns].endsWith(".NA")) {
         String patient_name = headers[headerCounterColumns].substring(0,headers[headerCounterColumns].length() - 3);
 				patientNames.add(patient_name);
@@ -61,7 +63,16 @@ class PhasingProgram{
 		return patientNames.toArray(new String[0]);
 	}
 
-  void runner(String VS_file, String BAM_file, int chunk_size, String proband, String father, String mother){
+	public boolean het_check(String genotype_string){
+		// first check if string is "NA"
+		char first_letter = genotype_string.charAt(0);
+		if (!(first_letter == 'N' || first_letter == genotype_string.charAt(1))){
+			return true;
+		}
+		return false;
+	}
+
+  public void runner(String VS_file, String BAM_file, int chunk_size, String proband, String father, String mother) throws IOException {
     // Step 1: Read in VS file and determine where proband is a het at
     BufferedReader vsfile_reader = new BufferedReader(new FileReader(VS_file));
     String curLine;
@@ -70,13 +81,27 @@ class PhasingProgram{
     this.patientNames = header_info_finder(curLine, proband, father, mother);
     while((curLine = vsfile_reader.readLine()) != null){
       split_line = curLine.split("\t");
-      // check if proband is het
+      // check if variant is snp
+			if (split_line[headerCounterMutType].equals("SNP")){
+				// if variant is SNP, see if proband is a het
+				if (het_check(split_line[proband_index])){
+					//if proband is het, first check if at least one of the parents homozygous (not phasable if both are het)
+					if (!(het_check(split_line[father_index]) && het_check(split_line[mother_index]))){
+						// if none of the three are NA, save the VCF VCF_Position
+						if (!(split_line[proband_index].charAt(0) == 'N' || split_line[father_index].charAt(0) == 'N' || split_line[mother_index].charAt(0) == 'N')){
+							// save the VCF position
+
+						}
+					}
+				}
+			}
 
     }
+		vsfile_reader.close();
   }
 
 
-  public static void main(String args[]){
+  public static void main(String args[]) throws IOException{
     PhasingProgram obj = new PhasingProgram();
     BufferedReader config_file = new BufferedReader(new FileReader(args[0]));
     String curLine;
@@ -87,8 +112,9 @@ class PhasingProgram{
       split_line = curLine.split("\t");
       values[i] = split_line[1];
     }
+		config_file.close();
     obj.runner(values[0], values[1], Integer.parseInt(values[2]), values[3], values[4], values[5]);
-    System.gc()
-    System.exit(0)
+    System.gc();
+    System.exit(0);
   }
 }

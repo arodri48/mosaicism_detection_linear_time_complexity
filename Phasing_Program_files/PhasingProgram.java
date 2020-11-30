@@ -72,29 +72,60 @@ class PhasingProgram{
 		return false;
 	}
 
+  public boolean denovo_het_check(String proband_geno, String father_geno, String mother_geno){
+    char first_letter = proband_geno.charAt(0);
+    char second_letter = proband_geno.charAt(1);
+    if ((father_geno.contains(first_letter) && mother_geno.contains(second_letter)) || (father_geno.contains(second_letter) && mother_geno.contains(first_letter))){
+      return false;
+    }
+    return true;
+  }
+
   public void runner(String VS_file, String BAM_file, int chunk_size, String proband, String father, String mother) throws IOException {
     // Step 1: Read in VS file and determine where proband is a het at
     BufferedReader vsfile_reader = new BufferedReader(new FileReader(VS_file));
     String curLine;
+    Set<String> duplicate_set = new HashSet<String>();
+    String prevVCF = "00000"
     String [] split_line;
     curLine = vsfile_reader.readLine();
-		ArrayList<long> phasable_snp_VCF_positions = new ArrayList<long>();
+		Set<String> phasable_snp_VCF_positions = new LinkedHashSet<String>();
     this.patientNames = header_info_finder(curLine, proband, father, mother);
+    // read through the VS file
+    String proband_genotype;
+    String father_genotype;
+    String mother_genotype;
+    String curVCF_pos;
     while((curLine = vsfile_reader.readLine()) != null){
       split_line = curLine.split("\t");
       // check if variant is snp
+      proband_genotype = split_line[proband_index];
+      father_genotype = split_line[father_index];
+      mother_genotype = split_line[mother_index];
+      curVCF_pos = split_line[headerCounterVCF];
 			if (split_line[headerCounterMutType].equals("SNP")){
 				// if variant is SNP, see if proband is a het
-				if (het_check(split_line[proband_index])){
+				if (het_check(proband_genotype)){
 					//if proband is het, first check if at least one of the parents homozygous (not phasable if both are het), but it is not the case that they are homozygous for the same allele
-					if (!(het_check(split_line[father_index]) && het_check(split_line[mother_index])) && !split_line[father_index].equals(split_line[mother_index])){
+					if (!(het_check(father_genotype) && het_check(mother_genotype)) && !father_genotype.equals(mother_genotype)){
 						// if none of the three are NA, save the VCF VCF_Position
-						if (!(split_line[proband_index].charAt(0) == 'N' || split_line[father_index].charAt(0) == 'N' || split_line[mother_index].charAt(0) == 'N')){
-							// save the VCF position
-							phasable_snp_VCF_positions.add(split_line[headerCounterVCF]);
+						if (!(proband_genotype.charAt(0) == 'N' || father_genotype.charAt(0) == 'N' || mother_genotype.charAt(0) == 'N')){
+              // check if proband alleles are in parents (that it's mendelian consistent)
+              if (!denovo_het_check(proband_genotype, father_genotype, mother_genotype)){
+                // check if prevVCF position matches the current one
+                if (!curVCF_pos.equals(prevVCF)){
+                  // first time seeing the position; add position to linkedhash set and then set prevVCF to new VCF position
+                  phasable_snp_VCF_positions.add(curVCF_pos);
+                  prevVCF = curVCF_pos;
+                }
+                else {
+                  // We have a duplicate SNP at the same position; add to duplicate set for removal from linked hash set later
+                  duplicate_set.add(curVCF_pos)
+                }
+              }
+
+							
 							// 1 in a thousand, snp distance between each other on average
-							// TODO: if multiple SNPS at same position, ignore that position
-							// TODO: check if proband het bases are different from parents (mendelian constiency)
 						}
 					}
 				}
@@ -102,11 +133,15 @@ class PhasingProgram{
 
     }
 		vsfile_reader.close();
+    // remove SNPs that had multiple lines with same VCF position
+    for (String value: duplicate_set){
+      phasable_snp_VCF_positions.remove(value);
+    }
 
 		// Step 2: Samtools to get read depths
 
 		// Step 3: Gang maternal and paternal read depths;
-		
+
   }
 
 

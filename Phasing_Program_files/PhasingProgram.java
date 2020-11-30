@@ -92,7 +92,9 @@ class PhasingProgram{
 						if (!(split_line[proband_index].charAt(0) == 'N' || split_line[father_index].charAt(0) == 'N' || split_line[mother_index].charAt(0) == 'N')){
 							// save the VCF position
 							phasable_snp_VCF_positions.add(split_line[headerCounterVCF]);
-							// TODO: if multiple SNPS at same position, need to figure that out
+							// 1 in a thousand, snp distance between each other on average
+							// TODO: if multiple SNPS at same position, ignore that position
+							// TODO: check if proband het bases are different from parents (mendelian constiency)
 						}
 					}
 				}
@@ -100,6 +102,11 @@ class PhasingProgram{
 
     }
 		vsfile_reader.close();
+
+		// Step 2: Samtools to get read depths
+
+		// Step 3: Gang maternal and paternal read depths;
+		
   }
 
 

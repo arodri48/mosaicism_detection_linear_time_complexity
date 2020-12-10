@@ -1,9 +1,16 @@
 package com.company;
 import java.io.*;
 import java.util.*;
+import htsjdk.samtools.BAMFileReader;
+import htsjdk.samtools.SamReader;
+import htsjdk.samtools.SamReaderFactory;
+import htsjdk.samtools.util.SamLocusIterator;-2.33.0-16-ga728b34-SNAPSHOT.samtools.*;
 
 public class PhasingProgram{
-    String [] patientNames;
+    public String [] patientNames;
+    public ArrayList<String> proband_genotypes;
+    public ArrayList<String> paternal_genotypes;
+    public ArrayList<String> maternal_genotypes;
 
     //initialization of the counters
     public int headerCounterChr ; //initializes the variable vsLineReader to locate the chromosome column
@@ -75,24 +82,18 @@ public class PhasingProgram{
         return (!father_geno.contains(""+first_letter) || !mother_geno.contains(""+second_letter)) && (!father_geno.contains(""+second_letter) || !mother_geno.contains(""+first_letter));
     }
 
-    public void runner(String VS_file, String BAM_file, int chunk_size, String proband, String father, String mother) throws IOException {
-        // Step 1: Read in VS file and determine where proband is a het at
-        BufferedReader vsfile_reader = new BufferedReader(new FileReader(VS_file));
-        String curLine;
-        Set<String> duplicate_set = new HashSet<>();
-        String prevVCF = "00000";
-        String [] split_line;
-        curLine = vsfile_reader.readLine();
-        Set<String> phasable_snp_VCF_positions = new LinkedHashSet<>();
-        this.patientNames = header_info_finder(curLine, proband, father, mother);
-        // read through the VS file
+    public Set<String> phasable_snp_finder(BufferedReader vsfile) throws IOException{
         String proband_genotype;
         String father_genotype;
         String mother_genotype;
         String curVCF_pos;
-        while((curLine = vsfile_reader.readLine()) != null){
+        String curLine;
+        String [] split_line;
+        String prevVCF = "00000";
+        Set<String> duplicate_set = new HashSet<>();
+        Set<String> phasable_snp_VCF_positions = new LinkedHashSet<>();
+        while((curLine = vsfile.readLine()) != null){
             split_line = curLine.split("\t");
-            // check if variant is snp
             proband_genotype = split_line[proband_index];
             father_genotype = split_line[father_index];
             mother_genotype = split_line[mother_index];
@@ -124,21 +125,115 @@ public class PhasingProgram{
                     }
                 }
             }
-
         }
-        vsfile_reader.close();
-        // remove SNPs that had multiple lines with same VCF position
         for (String value: duplicate_set){
             phasable_snp_VCF_positions.remove(value);
         }
+        return phasable_snp_VCF_positions;
+    }
 
-        // Step 2: Samtools to get read depths
-
-        // Step 3: Gang maternal and paternal read depths;
+    public void phasable_genotype_getter(BufferedReader input_file, Set<String> phasable_snps) throws IOException {
+        ArrayList<String> proband_geno = new ArrayList<>(phasable_snps.size());
+        ArrayList<String> paternal_geno = new ArrayList<>(phasable_snps.size());
+        ArrayList<String> maternal_geno = new ArrayList<>(phasable_snps.size());
+        String curLine;
+        String [] split_line;
+        String cur_phasable_pos;
+        Iterator itr = phasable_snps.iterator();
+        curLine = input_file.readLine();
+        split_line = curLine.split("\t");
+        cur_phasable_pos = (String) itr.next();
+        long int_cur_pos;
+        long pos_vs_file;
+        while (true){
+            int_cur_pos = Long.valueOf(cur_phasable_pos);
+            pos_vs_file = Long.valueOf(split_line[headerCounterVCF]);
+            if (int_cur_pos > pos_vs_file){
+                curLine = input_file.readLine();
+                if (curLine != null){
+                    split_line = curLine.split("\t");
+                }
+                else {
+                    break;
+                }
+            }
+            else if (int_cur_pos == pos_vs_file){
+                // add to the genotypes
+                proband_geno.add(split_line[proband_index]);
+                paternal_geno.add(split_line[father_index]);
+                maternal_geno.add(split_line[mother_index]);
+                // then check
+                curLine = input_file.readLine();
+                if (curLine != null && itr.hasNext()){
+                    cur_phasable_pos = (String) itr.next();
+                    split_line = curLine.split("\t");
+                }
+                else {
+                    break;
+                }
+            }
+            else {
+                if (itr.hasNext()){
+                    cur_phasable_pos = (String) itr.next();
+                }
+                else {
+                    break;
+                }
+            }
+        }
+        this.proband_genotypes = proband_geno;
+        this.paternal_genotypes = paternal_geno;
+        this.maternal_genotypes = maternal_geno;
 
     }
 
+    public void runner(String VS_file, String BAM_file, int chunk_size, String proband, String father, String mother) throws IOException {
+        // Step 1: Read in VS file and determine where proband is a het at
+        BufferedReader vsfile_reader = new BufferedReader(new FileReader(VS_file));
+        String curLine;
+        curLine = vsfile_reader.readLine();
+        this.patientNames = header_info_finder(curLine,proband,father, mother);
+        Set<String> phasable_snp_positions = phasable_snp_finder(vsfile_reader);
+        vsfile_reader.close();
+        // Step 2: Read in the VS file again, this time to obtain the genotypes at the right positions
+        BufferedReader vs2_reader =  new BufferedReader(new FileReader(VS_file));
+        curLine = vs2_reader.readLine();
+        phasable_genotype_getter(vs2_reader, phasable_snp_positions);
+        vs2_reader.close();
+        // Step 3: 
 
+
+
+
+
+
+        // Step 2: Samtools to get read depths
+        // open up the BAM file
+        SamReader reader = SamReaderFactory.makeDefault().open(new File(BAM_file));
+        //create an iterator
+        SamLocusIterator sli = new SamLocusIterator(reader);
+        int bam_position;
+        // for each phasable, valid SNP position
+        for (String val : phasable_snp_positions) {
+            // for each line in the BAM file
+            for (SamLocusIterator.LocusInfo li : sli) {
+                // check if position is same
+                bam_position = li.getPosition();
+                if (bam_position == val){
+                    // it's the same position
+                }
+                else if (bam_position < val) {
+                    // bam position is less than current phasable position
+                }
+                else {
+                    // bam position is greater than current phasable position
+                }
+
+            }
+        }
+        // Step 3: Gang maternal and paternal read depths;
+
+    }
     public static void main(String []args ) throws IOException{
         PhasingProgram obj = new PhasingProgram();
         BufferedReader config_file = new BufferedReader(new FileReader(args[0]));
@@ -152,8 +247,6 @@ public class PhasingProgram{
         }
         config_file.close();
         //obj.runner(values[0], values[1], Integer.parseInt(values[2]), values[3], values[4], values[5]);
-
-
         System.gc();
         System.exit(0);
     }

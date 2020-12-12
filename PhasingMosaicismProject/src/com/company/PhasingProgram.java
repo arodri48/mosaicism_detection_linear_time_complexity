@@ -4,7 +4,7 @@ import java.util.*;
 import htsjdk.samtools.BAMFileReader;
 import htsjdk.samtools.SamReader;
 import htsjdk.samtools.SamReaderFactory;
-import htsjdk.samtools.util.SamLocusIterator;-2.33.0-16-ga728b34-SNAPSHOT.samtools.*;
+import htsjdk.samtools.util.SamLocusIterator;
 
 public class PhasingProgram{
     public String [] patientNames;
@@ -187,7 +187,97 @@ public class PhasingProgram{
 
     }
 
-    public void runner(String VS_file, String BAM_file, int chunk_size, String proband, String father, String mother) throws IOException {
+    public char [][] phasing_determiner(ArrayList<String> proband, ArrayList<String> father, ArrayList<String> mother){
+        // Step 1: Initialize N x 2 char array; first column is father allele; second is mother allele
+        char [][] phased_array = new char[proband.size()][2];
+        // Step 2: Iterate through the arraylists and fill in the array
+        int snp_len = proband.size();
+        char first_allele;
+        char second_allele;
+        String proband_geno;
+        String father_geno;
+        String mother_geno;
+        for (int i = 0; i != snp_len; ++i){
+            proband_geno = proband.get(i);
+            father_geno = father.get(i);
+            mother_geno = mother.get(i);
+            first_allele = proband_geno.charAt(0);
+            second_allele = proband_geno.charAt(1);
+            int father_first_allele_indexof = father_geno.indexOf(first_allele);
+            // first check if first allele letter is in both parents; if so, we are dealing with f0xf1 cross
+            if (father_first_allele_indexof != -1 && mother_geno.indexOf(first_allele) != -1){
+                // check if second allele is in father
+                if (father_geno.indexOf(second_allele) != -1){
+                    // second allele is in father, so first allele belongs to mother
+                    phased_array[i][0] = second_allele;
+                    phased_array[i][1] = first_allele;
+                }
+                else {
+                    phased_array[i][0] = first_allele;
+                    phased_array[i][1] = second_allele;
+                }
+            }
+            // first allele is in only one of the parents
+            else {
+                if (father_first_allele_indexof != -1){
+                    phased_array[i][0] = first_allele;
+                    phased_array[i][1] = second_allele;
+                }
+                else {
+                    phased_array[i][0] = second_allele;
+                    phased_array[i][1] = first_allele;
+                }
+            }
+        }
+        return phased_array;
+    }
+
+    public int [][] read_depth_finder(Set<String> snp_vcf_pos, char [][] allele_parents, String father_bam, String mother_bam){
+        int len_SNPS = snp_vcf_pos.size();
+        int [][] read_depths_array = new int[len_SNPS][2];
+        // First get the read depths for the father
+        // Step 1: Create iterators for SNP_VCF_POS and the father's BAM
+        Iterator it1 = snp_vcf_pos.iterator();
+        SamReader reader = SamReaderFactory.makeDefault().open(new File(father_bam));
+        SamLocusIterator sli1 = new SamLocusIterator(reader);
+        // Step 2: Load the first values of the iterators
+        String cur_phasable_pos = (String) it1.next();
+        SamLocusIterator.LocusInfo li = sli1.next();
+        long int_cur_pos;
+        long pos_bam_file;
+        int counter1 = 0;
+        while (true){
+            int_cur_pos = Long.valueOf(cur_phasable_pos);
+            pos_bam_file = li.getPosition();
+            if (int_cur_pos > pos_bam_file){
+                if (sli1.hasNext()){
+                    li = sli1.next();
+                }
+                else {
+                    break;
+                }
+            }
+            else if (int_cur_pos == pos_bam_file){
+                // TODO: if positions match, check if line is proper allele; if so, save the read depth and increment
+                //  counter; if not proper allele, read the next line in the bam file
+            }
+            else {
+                if (it1.hasNext()){
+                    cur_phasable_pos = (String) it1.next();
+                }
+                else {
+                    break;
+                }
+            }
+        }
+        reader.close();
+
+
+        // Second, get the read depths for the mother
+        return read_depths_array;
+    }
+
+    public void runner(String VS_file, String BAM_file, int chunk_size, String proband, String father, String mother, String father_bam, String mother_bam) throws IOException {
         // Step 1: Read in VS file and determine where proband is a het at
         BufferedReader vsfile_reader = new BufferedReader(new FileReader(VS_file));
         String curLine;
@@ -195,12 +285,21 @@ public class PhasingProgram{
         this.patientNames = header_info_finder(curLine,proband,father, mother);
         Set<String> phasable_snp_positions = phasable_snp_finder(vsfile_reader);
         vsfile_reader.close();
+
         // Step 2: Read in the VS file again, this time to obtain the genotypes at the right positions
         BufferedReader vs2_reader =  new BufferedReader(new FileReader(VS_file));
         curLine = vs2_reader.readLine();
         phasable_genotype_getter(vs2_reader, phasable_snp_positions);
         vs2_reader.close();
-        // Step 3: 
+
+        // Step 3: Now that we have the positions and genotypes at each location, it's time to do the phasing; create
+        // N x 2 String Array, where the first column is the allele from the dad and the second is the allele from
+        char [][] parent_allele_array = phasing_determiner(proband_genotypes, paternal_genotypes, maternal_genotypes);
+
+        // Step 4: Obtain the read depth of the allele from the father and the mother from the BAM files and put into
+        // N x 2 array
+        int [][] read_depth_array = read_depth_finder(phasable_snp_positions, parent_allele_array, father_bam, mother_bam);
+
 
 
 

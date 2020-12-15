@@ -273,7 +273,7 @@ public class PhasingProgram{
         reader.close();
 
 
-        // Second, get the read depths for the mother
+        // TODO: Second, get the read depths for the mother
         return read_depths_array;
     }
 
@@ -296,42 +296,20 @@ public class PhasingProgram{
         // N x 2 String Array, where the first column is the allele from the dad and the second is the allele from
         char [][] parent_allele_array = phasing_determiner(proband_genotypes, paternal_genotypes, maternal_genotypes);
 
-        // Step 4: Obtain the read depth of the allele from the father and the mother from the BAM files and put into
+        // TODO: Step 4: Obtain the read depth of the allele from the father and the mother from the BAM files and put into
         // N x 2 array
         int [][] read_depth_array = read_depth_finder(phasable_snp_positions, parent_allele_array, father_bam, mother_bam);
 
+        // TODO: Step 5: Generate super SNPS from read depth array
+        ArrayList<Double> super_snps;
+        // Step 6: Write out super SNPS to file
 
-
-
-
-
-
-        // Step 2: Samtools to get read depths
-        // open up the BAM file
-        SamReader reader = SamReaderFactory.makeDefault().open(new File(BAM_file));
-        //create an iterator
-        SamLocusIterator sli = new SamLocusIterator(reader);
-        int bam_position;
-        // for each phasable, valid SNP position
-        for (String val : phasable_snp_positions) {
-            // for each line in the BAM file
-            for (SamLocusIterator.LocusInfo li : sli) {
-                // check if position is same
-                bam_position = li.getPosition();
-                if (bam_position == val){
-                    // it's the same position
-                }
-                else if (bam_position < val) {
-                    // bam position is less than current phasable position
-                }
-                else {
-                    // bam position is greater than current phasable position
-                }
-
-            }
+        BufferedWriter output_snp_file = new BufferedWriter(new FileWriter("output_snps.txt"));
+        for (double elm: super_snps){
+            output_snp_file.write(Double.toString(elm))
+            output_snp_file.newLine();
         }
-        // Step 3: Gang maternal and paternal read depths;
-
+        output_snp_file.close();
     }
     public static void main(String []args ) throws IOException{
         PhasingProgram obj = new PhasingProgram();

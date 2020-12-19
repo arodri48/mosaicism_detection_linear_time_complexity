@@ -1,7 +1,6 @@
 package com.company;
 import java.io.*;
 import java.util.*;
-import htsjdk.samtools.BAMFileReader;
 import htsjdk.samtools.SamReader;
 import htsjdk.samtools.SamReaderFactory;
 import htsjdk.samtools.util.SamLocusIterator;
@@ -146,8 +145,8 @@ public class PhasingProgram{
         long int_cur_pos;
         long pos_vs_file;
         while (true){
-            int_cur_pos = Long.valueOf(cur_phasable_pos);
-            pos_vs_file = Long.valueOf(split_line[headerCounterVCF]);
+            int_cur_pos = Long.parseLong(cur_phasable_pos);
+            pos_vs_file = Long.parseLong(split_line[headerCounterVCF]);
             if (int_cur_pos > pos_vs_file){
                 curLine = input_file.readLine();
                 if (curLine != null){
@@ -232,7 +231,7 @@ public class PhasingProgram{
         return phased_array;
     }
 
-    public int [][] read_depth_finder(Set<String> snp_vcf_pos, char [][] allele_parents, String father_bam, String mother_bam){
+    public int [][] read_depth_finder(Set<String> snp_vcf_pos, char [][] allele_parents, String father_bam, String mother_bam) throws IOException {
         int len_SNPS = snp_vcf_pos.size();
         int [][] read_depths_array = new int[len_SNPS][2];
         // First get the read depths for the father
@@ -301,12 +300,12 @@ public class PhasingProgram{
         int [][] read_depth_array = read_depth_finder(phasable_snp_positions, parent_allele_array, father_bam, mother_bam);
 
         // TODO: Step 5: Generate super SNPS from read depth array
-        ArrayList<Double> super_snps;
+        ArrayList<Double> super_snps = new ArrayList<>();
         // Step 6: Write out super SNPS to file
 
         BufferedWriter output_snp_file = new BufferedWriter(new FileWriter("output_snps.txt"));
         for (double elm: super_snps){
-            output_snp_file.write(Double.toString(elm))
+            output_snp_file.write(Double.toString(elm));
             output_snp_file.newLine();
         }
         output_snp_file.close();

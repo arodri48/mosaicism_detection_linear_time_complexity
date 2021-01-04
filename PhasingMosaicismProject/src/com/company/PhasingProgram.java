@@ -139,6 +139,9 @@ public class PhasingProgram{
         String [] split_line;
         String cur_phasable_pos;
         Iterator itr = phasable_snps.iterator();
+        // read in the header line
+        curLine = input_file.readLine();
+        // load the first dataline
         curLine = input_file.readLine();
         split_line = curLine.split("\t");
         cur_phasable_pos = (String) itr.next();
@@ -275,8 +278,50 @@ public class PhasingProgram{
         // TODO: Second, get the read depths for the mother
         return read_depths_array;
     }
+    public ArrayList<Double> super_snp_generator(int[][] read_depth_array, int chunk_size){
+        // Step 1: Determine number of super SNPs
+        int num_rows = read_depth_array.length;
+        int num_super_snps = num_rows / chunk_size;
 
-    public void runner(String VS_file, String BAM_file, int chunk_size, String proband, String father, String mother, String father_bam, String mother_bam) throws IOException {
+        // Step 2: Initialize an arraylist to contain the super SNPs
+        ArrayList<Double> super_snps = new ArrayList<>(2 * num_super_snps);
+
+        // Step 3: Generate the super SNPs
+        int minor_allele_sum = 0;
+        int major_allele_sum = 0;
+        int row_index = 0;
+        int cur_allele_one = 0;
+        int cur_allele_two = 0;
+        double minor_BAF = 0.0d;
+        int first_part_row_index = 0;
+        for (int i = 0; i != num_super_snps; ++i){
+            minor_allele_sum = 0;
+            major_allele_sum = 0;
+            minor_BAF = 0.0d;
+            row_index = i * chunk_size;
+            for (int j = 0; j != chunk_size; ++j){
+                // store the values into local variables
+                cur_allele_one = read_depth_array[row_index][0];
+                cur_allele_two = read_depth_array[row_index][1];
+                ++row_index;
+                // do comparison and then increment appropriate sum
+                if (cur_allele_one > cur_allele_two){
+                    minor_allele_sum += cur_allele_two;
+                    major_allele_sum += cur_allele_one;
+                }
+                else{
+                    minor_allele_sum += cur_allele_one;
+                    major_allele_sum += cur_allele_two;
+                }
+            }
+            minor_BAF = (double) minor_allele_sum / (minor_allele_sum + major_allele_sum);
+            super_snps.add(minor_BAF);
+            super_snps.add(1.0 - minor_BAF);
+        }
+        return super_snps;
+    }
+
+    public void runner(String VS_file, int chunk_size, String proband, String father, String mother, String father_bam, String mother_bam) throws IOException {
         // Step 1: Read in VS file and determine where proband is a het at
         BufferedReader vsfile_reader = new BufferedReader(new FileReader(VS_file));
         String curLine;
@@ -287,7 +332,6 @@ public class PhasingProgram{
 
         // Step 2: Read in the VS file again, this time to obtain the genotypes at the right positions
         BufferedReader vs2_reader =  new BufferedReader(new FileReader(VS_file));
-        curLine = vs2_reader.readLine();
         phasable_genotype_getter(vs2_reader, phasable_snp_positions);
         vs2_reader.close();
 
@@ -299,8 +343,8 @@ public class PhasingProgram{
         // N x 2 array
         int [][] read_depth_array = read_depth_finder(phasable_snp_positions, parent_allele_array, father_bam, mother_bam);
 
-        // TODO: Step 5: Generate super SNPS from read depth array
-        ArrayList<Double> super_snps = new ArrayList<>();
+        // Step 5: Generate super SNPS from read depth array
+        ArrayList<Double> super_snps = super_snp_generator(read_depth_array, chunk_size);
         // Step 6: Write out super SNPS to file
 
         BufferedWriter output_snp_file = new BufferedWriter(new FileWriter("output_snps.txt"));
@@ -315,14 +359,14 @@ public class PhasingProgram{
         BufferedReader config_file = new BufferedReader(new FileReader(args[0]));
         String curLine;
         String [] split_line;
-        String [] values = new String[6];
-        for (int i = 0; i != 6; ++i){
+        String [] values = new String[7];
+        for (int i = 0; i != 7; ++i){
             curLine = config_file.readLine();
             split_line = curLine.split("\t");
             values[i] = split_line[1];
         }
         config_file.close();
-        //obj.runner(values[0], values[1], Integer.parseInt(values[2]), values[3], values[4], values[5]);
+        obj.runner(values[0], Integer.parseInt(values[1]), values[2], values[3], values[4], values[5], values[6]);
         System.gc();
         System.exit(0);
     }

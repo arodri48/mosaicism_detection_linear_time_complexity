@@ -234,7 +234,19 @@ public class PhasingProgram{
         return phased_array;
     }
 
-    public int [][] read_depth_finder(Set<String> snp_vcf_pos, char [][] allele_parents, String father_bam, String mother_bam) throws IOException {
+    public int [][] read_depth_finder(Set<String> snp_vcf_pos, char [][] allele_parents, String father_bam, String mother_bam, String chrName) throws IOException {
+        // Step 1: Initialize read depth array
+        int len_SNPS = snp_vcf_pos.size();
+        int [][] read_depths_array = new int[len_SNPS][2];
+        // Step 2: Obtain the read
+
+
+
+
+
+
+
+        /*
         int len_SNPS = snp_vcf_pos.size();
         int [][] read_depths_array = new int[len_SNPS][2];
         // First get the read depths for the father
@@ -274,6 +286,8 @@ public class PhasingProgram{
         }
         reader.close();
 
+
+         */
 
         // TODO: Second, get the read depths for the mother
         return read_depths_array;
@@ -321,7 +335,7 @@ public class PhasingProgram{
         return super_snps;
     }
 
-    public void runner(String VS_file, int chunk_size, String proband, String father, String mother, String father_bam, String mother_bam) throws IOException {
+    public void runner(String VS_file, int chunk_size, String proband, String father, String mother, String father_bam, String mother_bam, String chrName) throws IOException {
         // Step 1: Read in VS file and determine where proband is a het at
         BufferedReader vsfile_reader = new BufferedReader(new FileReader(VS_file));
         String curLine;
@@ -341,7 +355,7 @@ public class PhasingProgram{
 
         // TODO: Step 4: Obtain the read depth of the allele from the father and the mother from the BAM files and put into
         // N x 2 array
-        int [][] read_depth_array = read_depth_finder(phasable_snp_positions, parent_allele_array, father_bam, mother_bam);
+        int [][] read_depth_array = read_depth_finder(phasable_snp_positions, parent_allele_array, father_bam, mother_bam, chrName);
 
         // Step 5: Generate super SNPS from read depth array
         ArrayList<Double> super_snps = super_snp_generator(read_depth_array, chunk_size);
@@ -366,7 +380,7 @@ public class PhasingProgram{
             values[i] = split_line[1];
         }
         config_file.close();
-        obj.runner(values[0], Integer.parseInt(values[1]), values[2], values[3], values[4], values[5], values[6]);
+        obj.runner(values[0], Integer.parseInt(values[1]), values[2], values[3], values[4], values[5], values[6], "chr7");
         System.gc();
         System.exit(0);
     }

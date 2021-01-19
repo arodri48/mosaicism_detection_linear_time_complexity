@@ -105,7 +105,7 @@ public class PhasingProgram{
                         // if none of the three are NA, save the VCF VCF_Position
                         if (!(proband_genotype.charAt(0) == 'N' || father_genotype.charAt(0) == 'N' || mother_genotype.charAt(0) == 'N')){
                             // check if proband alleles are in parents (that it's mendelian consistent)
-                            if (!denovo_het_check(proband_genotype, father_genotype, mother_genotype)){
+                            if (!denovo_het_ch0eck(proband_genotype, father_genotype, mother_genotype)){
                                 // check if prevVCF position matches the current one
                                 if (!curVCF_pos.equals(prevVCF)){
                                     // first time seeing the position; add position to linkedhash set and then set prevVCF to new VCF position

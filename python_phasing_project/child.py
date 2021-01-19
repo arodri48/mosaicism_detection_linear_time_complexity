@@ -1,5 +1,6 @@
 import numpy as np
 import sandia_stats
+from scipy.stats import t
 
 
 class Child:
@@ -127,10 +128,24 @@ class Child:
         if samp_size > self.child_ref_rd.size:
             print("Sample size is larger than total number of data points")
         else:
+            nm1 = samp_size - 1
             # Step 1: Allocate an array that will store the t
             t_values = np.zeros(self.child_ref_rd.size - samp_size + 1)
             # Step 2: Generate difference array between dad and mom rd
             diff_arr = self.dad_rd_array - self.mom_rd_array
             # Step 3: Calculate initial moments
             moments = sandia_stats.statistical_moment_generator(diff_arr[0, samp_size])
-            # Step 4: Calculate t-statistic for first window s
+            # Step 4: Calculate t-statistic for first window
+            sample_var = (moments[1] / nm1)
+            t_values[0] = moments[0] / ((sample_var / samp_size) ** 0.5)
+            # Step 5: Calculate t-values for rest of positions
+            counter1 = 0
+            counter2 = samp_size
+            for i in range(self.child_ref_rd.size - samp_size):
+                moments = sandia_stats.moment_updater(moments, diff_arr[counter1], diff_arr[counter2], samp_size)
+                counter1 += 1
+                counter2 += 1
+                sample_var = moments[1] / nm1
+                t_values[counter1] = moments[0] / ((sample_var / samp_size) ** 0.5)
+            # Step 6: Find the t-critical value and determine if there are any samples that exceed it
+            t_crit = t.ppf(0.95, nm1)

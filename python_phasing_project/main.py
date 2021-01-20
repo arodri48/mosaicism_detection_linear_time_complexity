@@ -21,9 +21,20 @@ def main():
     for elem in children:
         elem.phasable_snp_determiner(chr7_df)
 
-    # Step 6: Do sliding t-test for each child
+    # Step 6: Do sliding t-test for each child and see if possible mosaicism present
     for elem in children:
         elem.t_test_snps(10)
+
+    # Step 7: Check if a child is mosaic
+    mosaic_child_present = False
+    for elem in children:
+        if (elem.est_start_of_mosaicism != 0):
+            mosaic_child_present = True
+            # detect region of mosaicism in the child
+
+    # if all clear, print out
+    if (not mosaic_child_present):
+        print("No child is mosaic")
 
 
 main()

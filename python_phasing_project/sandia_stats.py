@@ -5,13 +5,8 @@ def statistical_moment_generator(data_arr):
     mom2 = 0.0
     mom3 = 0.0
     mom4 = 0.0
-    inv_n = 0.0
-    val = 0.0
-    delta = 0.0
-    A = 0.0
-    B = 0.0
     for i in range(data_arr.size):
-        n = n + 1.0
+        n += 1.0
         inv_n = 1.0 / n
         val = data_arr[i]
         delta = val - mom1

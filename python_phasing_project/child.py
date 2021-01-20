@@ -4,12 +4,7 @@ from scipy.stats import t
 
 
 class Child:
-    het_set = {"0/1", "1/0", "1|0", "0|1"}
-    hom_ref = {"0/0", "0|0"}
-    hom_var = {"1/1", "1|1"}
-    het_zero_one = {"0/1", "0|1"}
-    het_one_zero = {"1/0", "1|0"}
-    empty_geno = {"./."}
+
 
     def __init__(self, child_name, father_name, mother_name):
         self.name = child_name
@@ -22,14 +17,10 @@ class Child:
         self.mom_ref_var_array = np.zeros(2)
         self.child_ref_rd = np.zeros(2)
         self.child_var_rd = np.zeros(2)
+        self.est_start_of_mosaicism = 0
 
     def phasable_snp_determiner(self, chr_df):
         # first make temporary helper variables
-        mom_line_info = []
-        dad_line_info = []
-        child_info = []
-        dad_geno = ""
-        mom_geno = ""
         pos_final = []
         dad_ref_var_final = []
         mom_ref_var_final = []
@@ -37,47 +28,51 @@ class Child:
         mom_rd_final = []
         child_ref_rd_final = []
         child_var_rd_final = []
+        het_set = {"0/1", "1/0", "1|0", "0|1"}
+        hom_ref = {"0/0", "0|0"}
+        hom_var = {"1/1", "1|1"}
+        het_zero_one = {"0/1", "0|1"}
+        empty_geno = {"./."}
 
         # iterate through every row
         for index, row in chr_df.iterrows():
             child_info = row[self.name].split(':')
-            if child_info[0] in self.het_set:
+            child_read_depths = child_info[1].split(',')
+            if child_info[0] in het_set and (4 < int(child_read_depths[0]) < 75) and (4 < int(child_read_depths[1]) < 75):
                 # proband is a het; need to check the parents and check at least one is homozygous and if they are
                 # both homozygous, not for same allele
                 mom_line_info = row[self.mother_name].split(':')
                 dad_line_info = row[self.father_name].split(':')
                 dad_geno = dad_line_info[0]
                 mom_geno = mom_line_info[0]
-                if (not ((mom_geno in self.het_set) and (dad_geno in self.het_set)) and not (
-                        (mom_geno in self.hom_ref and dad_geno in self.hom_ref) or (
-                        mom_geno in self.hom_var and dad_geno in self.hom_var))):
-                    if not (dad_geno in self.empty_geno or mom_geno in self.empty_geno):
+                if not((mom_geno in het_set and dad_geno in het_set) or ((mom_geno in hom_ref and dad_geno in hom_ref) or (
+                        mom_geno in hom_var and dad_geno in hom_var)) ):
+                    if not (dad_geno in empty_geno or mom_geno in empty_geno):
                         dad_read_depths = dad_line_info[1].split(',')
                         mom_read_depths = mom_line_info[1].split(',')
-                        child_read_depths = child_info[1].split(',')
                         # save the position number and then the read depth for the child
                         pos_final.append(row['POS'])
-                        if child_info[0] in self.het_zero_one:
+                        if child_info[0] in het_zero_one:
                             child_ref_rd_final.append(int(child_read_depths[0]))
                             child_var_rd_final.append(int(child_read_depths[1]))
                         else:
                             child_ref_rd_final.append(int(child_read_depths[1]))
                             child_var_rd_final.append(int(child_read_depths[0]))
                         # determine which parent each allele came from and save the read depth for that parent's allele
-                        if dad_geno in self.hom_var and mom_geno in self.hom_ref:
+                        if dad_geno in hom_var and mom_geno in hom_ref:
                             dad_ref_var_final.append(1)
                             mom_ref_var_final.append(0)
                             # obtain and store read count
                             dad_rd_final.append(int(dad_read_depths[0]) + int(dad_read_depths[1]))
                             mom_rd_final.append(int(mom_read_depths[0]) + int(mom_read_depths[1]))
-                        elif dad_geno in self.hom_ref and mom_geno in self.hom_var:
+                        elif dad_geno in hom_ref and mom_geno in hom_var:
                             dad_ref_var_final.append(0)
                             mom_ref_var_final.append(1)
                             # obtain and store read count
                             dad_rd_final.append(int(dad_read_depths[0]) + int(dad_read_depths[1]))
                             mom_rd_final.append(int(mom_read_depths[0]) + int(mom_read_depths[1]))
-                        elif dad_geno in self.het_set:
-                            if mom_geno in self.hom_ref:
+                        elif dad_geno in het_set:
+                            if mom_geno in hom_ref:
                                 mom_ref_var_final.append(0)
                                 dad_ref_var_final.append(1)
                                 mom_rd_final.append(int(mom_read_depths[0]) + int(mom_read_depths[1]))
@@ -97,7 +92,7 @@ class Child:
                                 else:
                                     dad_rd_final.append(int(dad_read_depths[1]))
                         else:
-                            if dad_geno in self.hom_ref:
+                            if dad_geno in hom_ref:
                                 mom_ref_var_final.append(1)
                                 dad_ref_var_final.append(0)
                                 dad_rd_final.append(int(dad_read_depths[0]) + int(dad_read_depths[1]))
@@ -149,3 +144,9 @@ class Child:
                 t_values[counter1] = moments[0] / ((sample_var / samp_size) ** 0.5)
             # Step 6: Find the t-critical value and determine if there are any samples that exceed it
             t_crit = t.ppf(0.95, nm1)
+            t_val_abs = np.abs(t_values)
+            index_of_mosaicism = np.argmax(t_val_abs > t_crit)
+            # if index_of_mosaicism is not equal to 0, update the start_of_mosaicism index
+            if index_of_mosaicism > 0:
+                self.est_start_of_mosaicism = index_of_mosaicism + samp_size
+                print("Mosaicism has been detected in child " + self.name)

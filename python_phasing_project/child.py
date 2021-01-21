@@ -1,5 +1,5 @@
 import numpy as np
-import sandia_stats
+from python_modules import sandia_stats
 from scipy.stats import t
 
 
@@ -131,7 +131,7 @@ class Child:
             # Step 3: Calculate initial moments
             moments = sandia_stats.statistical_moment_generator(diff_arr[0, samp_size])
             # Step 4: Calculate t-statistic for first window
-            sample_var = (moments[1] / nm1)
+            sample_var = (moments[1] / samp_size)
             t_values[0] = moments[0] / ((sample_var / samp_size) ** 0.5)
             # Step 5: Calculate t-values for rest of positions
             counter1 = 0
@@ -140,7 +140,7 @@ class Child:
                 moments = sandia_stats.moment_updater(moments, diff_arr[counter1], diff_arr[counter2], samp_size)
                 counter1 += 1
                 counter2 += 1
-                sample_var = moments[1] / nm1
+                sample_var = moments[1] / samp_size
                 t_values[counter1] = moments[0] / ((sample_var / samp_size) ** 0.5)
             # Step 6: Find the t-critical value and determine if there are any samples that exceed it
             t_crit = t.ppf(0.95, nm1)

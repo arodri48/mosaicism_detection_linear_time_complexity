@@ -1,0 +1,2 @@
+PED_FILE    HEH.ped
+VCF_FILE    HEH.vcf

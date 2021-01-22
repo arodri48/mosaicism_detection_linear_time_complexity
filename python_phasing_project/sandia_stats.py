@@ -1,6 +1,3 @@
-import numpy as np
-
-
 def statistical_moment_generator(data_arr):
     # Generates first, second, third, and fourth moments for a data array
     n = 0.0
@@ -18,8 +15,7 @@ def statistical_moment_generator(data_arr):
         B = val - mom1
         mom3 += A * (B * delta * (n - 2.0) - 3.0 * mom2)
         mom2 += delta * B
-    result_arr = [mom1, mom2, mom3, mom4]
-    return result_arr
+    return mom1, mom2, mom3, mom4
 
 
 def moment_updater(mom_list, old_value, new_value, win_size):
@@ -46,5 +42,4 @@ def moment_updater(mom_list, old_value, new_value, win_size):
     B = new_value - mom1
     mom3 += A * (B * delta * nm2 - 3.0 * mom2)
     mom2 += delta * B
-    moments = [mom1, mom2, mom3, mom4]
-    return moments
+    return mom1, mom2, mom3, mom4

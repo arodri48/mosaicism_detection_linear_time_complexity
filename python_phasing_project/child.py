@@ -5,7 +5,6 @@ from scipy.stats import t
 
 class Child:
 
-
     def __init__(self, child_name, father_name, mother_name):
         self.name = child_name
         self.father_name = father_name
@@ -38,15 +37,17 @@ class Child:
         for index, row in chr_df.iterrows():
             child_info = row[self.name].split(':')
             child_read_depths = child_info[1].split(',')
-            if child_info[0] in het_set and (4 < int(child_read_depths[0]) < 75) and (4 < int(child_read_depths[1]) < 75):
+            if child_info[0] in het_set and (4 < int(child_read_depths[0]) < 75) and (
+                    4 < int(child_read_depths[1]) < 75):
                 # proband is a het; need to check the parents and check at least one is homozygous and if they are
                 # both homozygous, not for same allele
                 mom_line_info = row[self.mother_name].split(':')
                 dad_line_info = row[self.father_name].split(':')
                 dad_geno = dad_line_info[0]
                 mom_geno = mom_line_info[0]
-                if not((mom_geno in het_set and dad_geno in het_set) or ((mom_geno in hom_ref and dad_geno in hom_ref) or (
-                        mom_geno in hom_var and dad_geno in hom_var)) ):
+                if not ((mom_geno in het_set and dad_geno in het_set) or (
+                        (mom_geno in hom_ref and dad_geno in hom_ref) or (
+                        mom_geno in hom_var and dad_geno in hom_var))):
                     if not (dad_geno in empty_geno or mom_geno in empty_geno):
                         dad_read_depths = dad_line_info[1].split(',')
                         mom_read_depths = mom_line_info[1].split(',')

@@ -1,5 +1,5 @@
 import numpy as np
-from python_modules import sandia_stats
+import sandia_stats
 from scipy.stats import t
 
 
@@ -136,8 +136,9 @@ class Child:
             # Step 5: Calculate t-values for rest of positions
             counter1 = 0
             counter2 = samp_size
+            mom_update_func = sandia_stats.moment_updater
             for i in range(self.child_ref_rd.size - samp_size):
-                moments = sandia_stats.moment_updater(moments, diff_arr[counter1], diff_arr[counter2], samp_size)
+                moments = mom_update_func(moments, diff_arr[counter1], diff_arr[counter2], samp_size)
                 counter1 += 1
                 counter2 += 1
                 sample_var = moments[1] / samp_size

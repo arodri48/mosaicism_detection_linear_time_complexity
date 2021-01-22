@@ -10,10 +10,9 @@ def statistical_moment_generator(data_arr):
     mom4 = 0.0
     for i in range(data_arr.size):
         n += 1.0
-        inv_n = 1.0 / n
         val = data_arr[i]
         delta = val - mom1
-        A = delta * inv_n
+        A = delta / n
         mom1 += A
         mom4 += A * (A * A * delta * i * (n * (n - 3.0) + 3.0) + (6.0 * A * mom2) - (4.0 * mom3))
         B = val - mom1
@@ -41,8 +40,7 @@ def moment_updater(mom_list, old_value, new_value, win_size):
     mom1 = (win_size * mom1 - old_value) / nm1
 
     delta = new_value - mom1
-    inv_n = 1.0 / win_size
-    A = delta * inv_n
+    A = delta / win_size
     mom1 += A
     mom4 += A * (A * A * delta * nm1 * (win_size * (win_size - 3.0) + 3.0) + 6.0 * A * mom2 - 4.0 * mom3)
     B = new_value - mom1

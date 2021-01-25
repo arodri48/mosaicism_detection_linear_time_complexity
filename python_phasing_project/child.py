@@ -152,3 +152,17 @@ class Child:
             if index_of_mosaicism > 0:
                 self.est_start_of_mosaicism = index_of_mosaicism + samp_size
                 print("Mosaicism has been detected in child " + self.name)
+
+    def edge_detection(self, filter_width, radius=100):
+        # Step 1: Using the difference between the read depths, find the height
+        diff_arr = self.dad_rd_array - self.mom_rd_array;
+        height = diff_arr[self.est_start_of_mosaicism + radius] - diff_arr[self.est_start_of_mosaicism - radius]
+
+        # Step 2: Create the filter arrays
+        front_filter = np.zeros(2 * filter_width)
+        back_filter = np.zeros(2 * filter_width)
+        front_filter[filter_width:] = height
+        back_filter[0:filter_width] = height
+
+        # Step 3: Implement the sliding filter
+        for i in range(2*radius):

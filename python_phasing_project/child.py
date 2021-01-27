@@ -17,6 +17,7 @@ class Child:
         self.child_ref_rd = np.zeros(2)
         self.child_var_rd = np.zeros(2)
         self.est_start_of_mosaicism = 0
+        self.left_border_mosaicism_region = 0
 
     def phasable_snp_determiner(self, chr_df):
         # first make temporary helper variables
@@ -153,16 +154,39 @@ class Child:
                 self.est_start_of_mosaicism = index_of_mosaicism + samp_size
                 print("Mosaicism has been detected in child " + self.name)
 
-    def edge_detection(self, filter_width, radius=100):
-        # Step 1: Using the difference between the read depths, find the height
-        diff_arr = self.dad_rd_array - self.mom_rd_array;
-        height = diff_arr[self.est_start_of_mosaicism + radius] - diff_arr[self.est_start_of_mosaicism - radius]
+    def edge_detection(self, filter_width, radius=100, tolerance = 0.1):
+        # filter_width must be much less than radius
+        if filter_width >= radius:
+            print("Filter width larger than radius around starting point")
+        elif not (isinstance(filter_width, int) or isinstance(radius, int)):
+            print("Either filter width or radius around starting point is not an integer")
+        else:
+            # Step 1: Using the difference between the read depths, find the height
+            diff_arr = self.dad_rd_array - self.mom_rd_array
+            height = diff_arr[self.est_start_of_mosaicism + radius] - diff_arr[self.est_start_of_mosaicism - radius]
 
-        # Step 2: Create the filter arrays
-        front_filter = np.zeros(2 * filter_width)
-        back_filter = np.zeros(2 * filter_width)
-        front_filter[filter_width:] = height
-        back_filter[0:filter_width] = height
+            # Step 2: Create the filter arrays
+            front_filter = np.zeros(2 * filter_width)
+            back_filter = np.zeros(2 * filter_width)
+            front_filter[filter_width:] = height
+            back_filter[0:filter_width] = height
 
-        # Step 3: Implement the sliding filter
-        for i in range(2*radius):
+            # Step 3: Implement the sliding filter
+            starting_point = self.est_start_of_mosaicism - radius
+            end_point = starting_point + 2*filter_width
+            forward_filter_results = np.zeros(2*radius)
+            for i in range(2*radius):
+                forward_filter_results[i] = (front_filter - diff_arr[starting_point:end_point]).sum()
+                starting_point += 1
+                end_point += 1
+            # Step 4: Take the absolute value of the results and find the minimum value; then check tolerance
+            abs_val_forward_filter = np.abs(forward_filter_results)
+            min_val = np.amin(abs_val_forward_filter)
+            if min_val < tolerance:
+                self.left_border_mosaicism_region = starting_point + np.argmin(abs_val_forward_filter)
+
+            # Step 5: Implement the sliding filter to find the right edge (if exists)
+            right_border_starting_point = self.est_start_of_mosaicism
+            right_border_end_point = right_border_starting_point + 2 * filter_width
+            backward_filter_results = 
+

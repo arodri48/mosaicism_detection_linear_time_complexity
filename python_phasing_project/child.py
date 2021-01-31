@@ -18,6 +18,7 @@ class Child:
         self.child_var_rd = np.zeros(2)
         self.est_start_of_mosaicism = 0
         self.left_border_mosaicism_region = 0
+        self.right_border_mosaicism_region = 0
 
     def phasable_snp_determiner(self, chr_df):
         # first make temporary helper variables
@@ -180,13 +181,22 @@ class Child:
                 starting_point += 1
                 end_point += 1
             # Step 4: Take the absolute value of the results and find the minimum value; then check tolerance
-            abs_val_forward_filter = np.abs(forward_filter_results)
-            min_val = np.amin(abs_val_forward_filter)
+            abs_val_forward_filter_results = np.abs(forward_filter_results)
+            min_val = np.amin(abs_val_forward_filter_results)
             if min_val < tolerance:
-                self.left_border_mosaicism_region = starting_point + np.argmin(abs_val_forward_filter)
-
-            # Step 5: Implement the sliding filter to find the right edge (if exists)
-            right_border_starting_point = self.est_start_of_mosaicism
-            right_border_end_point = right_border_starting_point + 2 * filter_width
-            backward_filter_results = 
-
+                self.left_border_mosaicism_region = starting_point + np.argmin(abs_val_forward_filter_results)
+                # Step 5: Implement the sliding filter to find the right edge (if exists)
+                right_border_starting_point = self.est_start_of_mosaicism
+                right_border_end_point = right_border_starting_point + 2 * filter_width
+                backward_filter_results = np.zeros(2*radius)
+                for i in range(2*radius):
+                    backward_filter_results[i] = (back_filter - diff_arr[right_border_starting_point:right_border_end_point]).sum()
+                    right_border_starting_point += 1
+                    right_border_end_point += 1
+                # Step 6: Take absolute value of the results and find the minimum value; then check tolerance
+                abs_val_backward_filter_results = np.abs(backward_filter_results)
+                min_val = np.amin(abs_val_backward_filter_results)
+                if min_val < tolerance:
+                    self.right_border_mosaicism_region = right_border_starting_point + np.argmin(abs_val_backward_filter_results)
+                else:
+                    self.right_border_mosaicism_region = diff_arr.size - 1

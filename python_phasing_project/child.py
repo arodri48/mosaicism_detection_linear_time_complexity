@@ -37,14 +37,14 @@ class Child:
 
         # iterate through every row
         for index, row in chr_df.iterrows():
-            child_info = row[self.name].split(':')
+            child_info = row[self.name].split(':', 3)
             child_read_depths = child_info[1].split(',')
             if child_info[0] in het_set and (4 < int(child_read_depths[0]) < 75) and (
                     4 < int(child_read_depths[1]) < 75):
                 # proband is a het; need to check the parents and check at least one is homozygous and if they are
                 # both homozygous, not for same allele
-                mom_line_info = row[self.mother_name].split(':')
-                dad_line_info = row[self.father_name].split(':')
+                mom_line_info = row[self.mother_name].split(':',3)
+                dad_line_info = row[self.father_name].split(':',3)
                 dad_geno = dad_line_info[0]
                 mom_geno = mom_line_info[0]
                 if not ((mom_geno in het_set and dad_geno in het_set) or (
@@ -79,8 +79,8 @@ class Child:
                                 mom_ref_var_final.append(0)
                                 dad_ref_var_final.append(1)
                                 mom_rd_final.append(int(mom_read_depths[0]) + int(mom_read_depths[1]))
-                                dad_geno_split = [char for char in dad_geno]
-                                if dad_geno_split[0] == '1':
+                                # dad_geno_split = [char for char in dad_geno]
+                                if dad_geno[0] == '1':
                                     dad_rd_final.append(int(dad_read_depths[0]))
                                 else:
                                     dad_rd_final.append(int(dad_read_depths[1]))
@@ -89,8 +89,8 @@ class Child:
                                 mom_ref_var_final.append(1)
                                 dad_ref_var_final.append(0)
                                 mom_rd_final.append(int(mom_read_depths[0]) + int(mom_read_depths[1]))
-                                dad_geno_split = [char for char in dad_geno]
-                                if dad_geno_split[0] == '0':
+                                # dad_geno_split = [char for char in dad_geno]
+                                if dad_geno[0] == '0':
                                     dad_rd_final.append(int(dad_read_depths[0]))
                                 else:
                                     dad_rd_final.append(int(dad_read_depths[1]))
@@ -99,8 +99,8 @@ class Child:
                                 mom_ref_var_final.append(1)
                                 dad_ref_var_final.append(0)
                                 dad_rd_final.append(int(dad_read_depths[0]) + int(dad_read_depths[1]))
-                                mom_geno_split = [char for char in mom_geno]
-                                if mom_geno_split[0] == '1':
+                                # mom_geno_split = [char for char in mom_geno]
+                                if mom_geno[0] == '1':
                                     mom_rd_final.append(int(mom_read_depths[0]))
                                 else:
                                     mom_rd_final.append(int(mom_read_depths[1]))
@@ -108,8 +108,8 @@ class Child:
                                 mom_ref_var_final.append(0)
                                 dad_ref_var_final.append(1)
                                 dad_rd_final.append(int(dad_read_depths[0]) + int(dad_read_depths[1]))
-                                mom_geno_split = [char for char in mom_geno]
-                                if mom_geno_split[0] == '0':
+                                # mom_geno_split = [char for char in mom_geno]
+                                if mom_geno[0] == '0':
                                     mom_rd_final.append(int(mom_read_depths[0]))
                                 else:
                                     mom_rd_final.append(int(mom_read_depths[1]))
@@ -155,7 +155,7 @@ class Child:
                 self.est_start_of_mosaicism = index_of_mosaicism + samp_size
                 print("Mosaicism has been detected in child " + self.name)
 
-    def edge_detection(self, filter_width, radius=100, tolerance = 0.1):
+    def edge_detection(self, filter_width, radius=100, tolerance=0.1):
         # filter_width must be much less than radius
         if filter_width >= radius:
             print("Filter width larger than radius around starting point")
@@ -174,29 +174,31 @@ class Child:
 
             # Step 3: Implement the sliding filter
             starting_point = self.est_start_of_mosaicism - radius
-            end_point = starting_point + 2*filter_width
-            forward_filter_results = np.zeros(2*radius)
-            for i in range(2*radius):
+            end_point = starting_point + 2 * filter_width
+            forward_filter_results = np.zeros(2 * radius)
+            for i in range(2 * radius):
                 forward_filter_results[i] = (front_filter - diff_arr[starting_point:end_point]).sum()
                 starting_point += 1
                 end_point += 1
             # Step 4: Take the absolute value of the results and find the minimum value; then check tolerance
             abs_val_forward_filter_results = np.abs(forward_filter_results)
             min_val = np.amin(abs_val_forward_filter_results)
+            print("The minimum sum value for left border is " + str(min_val))
             if min_val < tolerance:
                 self.left_border_mosaicism_region = starting_point + np.argmin(abs_val_forward_filter_results)
                 # Step 5: Implement the sliding filter to find the right edge (if exists)
                 right_border_starting_point = self.est_start_of_mosaicism
                 right_border_end_point = right_border_starting_point + 2 * filter_width
-                backward_filter_results = np.zeros(2*radius)
-                for i in range(2*radius):
-                    backward_filter_results[i] = (back_filter - diff_arr[right_border_starting_point:right_border_end_point]).sum()
+                backward_filter_results = np.zeros(2 * radius)
+                for i in range(2 * radius):
+                    backward_filter_results[i] = (
+                                back_filter - diff_arr[right_border_starting_point:right_border_end_point]).sum()
                     right_border_starting_point += 1
                     right_border_end_point += 1
                 # Step 6: Take absolute value of the results and find the minimum value; then check tolerance
                 abs_val_backward_filter_results = np.abs(backward_filter_results)
                 min_val = np.amin(abs_val_backward_filter_results)
-                if min_val < tolerance:
-                    self.right_border_mosaicism_region = right_border_starting_point + np.argmin(abs_val_backward_filter_results)
-                else:
-                    self.right_border_mosaicism_region = diff_arr.size - 1
+                print("The minimum sum value for right border is " + str(min_val))
+                # Set the value of the right border
+                self.right_border_mosaicism_region = right_border_starting_point + np.argmin(
+                    abs_val_backward_filter_results) if min_val < tolerance else diff_arr.size - 1

@@ -1,6 +1,7 @@
 import numpy as np
 import sandia_stats
 from scipy.stats import t
+from collections import Counter
 
 
 class Child:

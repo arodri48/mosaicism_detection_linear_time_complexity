@@ -8,12 +8,11 @@ def read_VCF(vcf_path, name_list):
     df = pd.read_csv(io.StringIO(''.join(lines)), sep='\t')
     df = df[~df['REF'].str.contains(",")]
     df = df[~df['ALT'].str.contains(",")]
-    df = df[~df['QUAL'].str.contains(".")]
     df['REF'] = df['REF'].astype('str')
     df['ALT'] = df['ALT'].astype('str')
-    df['QUAL'] = pd.to_numeric(df['QUAL'], errors='coerce')
     for elem in name_list:
         df[elem] = df[elem].astype('str')
+    df['QUAL'] = pd.to_numeric(df['QUAL'], errors='coerce')
     return df
 
 

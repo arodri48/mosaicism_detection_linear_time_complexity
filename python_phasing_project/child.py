@@ -31,10 +31,6 @@ class Child:
         child_ref_rd_final = []
         child_var_rd_final = []
         het_set = {"0/1", "1/0", "1|0", "0|1"}
-        hom_ref = {"0/0", "0|0"}
-        hom_var = {"1/1", "1|1"}
-        het_zero_one = {"0/1", "0|1"}
-        empty_geno = {"./."}
 
         # iterate through every row
         for index, row in chr_df.iterrows():
@@ -44,39 +40,43 @@ class Child:
                     4 < int(child_read_depths[1]) < 75):
                 # proband is a het; need to check the parents and check at least one is homozygous and if they are
                 # both homozygous, not for same allele
-                mom_line_info = row[self.mother_name].split(':',3)
-                dad_line_info = row[self.father_name].split(':',3)
+                mom_line_info = row[self.mother_name].split(':', 3)
+                dad_line_info = row[self.father_name].split(':', 3)
                 dad_geno = dad_line_info[0]
                 mom_geno = mom_line_info[0]
-                if not ((mom_geno in het_set and dad_geno in het_set) or (
-                        (mom_geno in hom_ref and dad_geno in hom_ref) or (
-                        mom_geno in hom_var and dad_geno in hom_var))):
-                    if not (dad_geno in empty_geno or mom_geno in empty_geno):
+
+                mom_geno_count = Counter(mom_geno)
+                dad_geno_count = Counter(dad_geno)
+                if not ((3 == len(mom_geno_count) == len(dad_geno_count)) or (
+                        (2 == mom_geno_count['0'] == dad_geno_count['0']) or (
+                        2 == mom_geno_count['1'] == dad_geno_count['1'])
+                )):
+                    if 0 == dad_geno_count['.'] == mom_geno_count['.']:
                         dad_read_depths = dad_line_info[1].split(',')
                         mom_read_depths = mom_line_info[1].split(',')
                         # save the position number and then the read depth for the child
                         pos_final.append(row['POS'])
-                        if child_info[0] in het_zero_one:
+                        if child_info[0][2] == '1':
                             child_ref_rd_final.append(int(child_read_depths[0]))
                             child_var_rd_final.append(int(child_read_depths[1]))
                         else:
                             child_ref_rd_final.append(int(child_read_depths[1]))
                             child_var_rd_final.append(int(child_read_depths[0]))
                         # determine which parent each allele came from and save the read depth for that parent's allele
-                        if dad_geno in hom_var and mom_geno in hom_ref:
+                        if 2 == dad_geno_count['1'] == mom_geno_count['0']:
                             dad_ref_var_final.append(1)
                             mom_ref_var_final.append(0)
                             # obtain and store read count
                             dad_rd_final.append(int(dad_read_depths[0]) + int(dad_read_depths[1]))
                             mom_rd_final.append(int(mom_read_depths[0]) + int(mom_read_depths[1]))
-                        elif dad_geno in hom_ref and mom_geno in hom_var:
+                        elif 2 == dad_geno_count['0'] == mom_geno_count['1']:
                             dad_ref_var_final.append(0)
                             mom_ref_var_final.append(1)
                             # obtain and store read count
                             dad_rd_final.append(int(dad_read_depths[0]) + int(dad_read_depths[1]))
                             mom_rd_final.append(int(mom_read_depths[0]) + int(mom_read_depths[1]))
-                        elif dad_geno in het_set:
-                            if mom_geno in hom_ref:
+                        elif len(dad_geno_count) == 3:
+                            if mom_geno_count['0'] == 2:
                                 mom_ref_var_final.append(0)
                                 dad_ref_var_final.append(1)
                                 mom_rd_final.append(int(mom_read_depths[0]) + int(mom_read_depths[1]))
@@ -96,11 +96,10 @@ class Child:
                                 else:
                                     dad_rd_final.append(int(dad_read_depths[1]))
                         else:
-                            if dad_geno in hom_ref:
+                            if dad_geno_count['0'] == 2:
                                 mom_ref_var_final.append(1)
                                 dad_ref_var_final.append(0)
                                 dad_rd_final.append(int(dad_read_depths[0]) + int(dad_read_depths[1]))
-                                # mom_geno_split = [char for char in mom_geno]
                                 if mom_geno[0] == '1':
                                     mom_rd_final.append(int(mom_read_depths[0]))
                                 else:
@@ -109,7 +108,6 @@ class Child:
                                 mom_ref_var_final.append(0)
                                 dad_ref_var_final.append(1)
                                 dad_rd_final.append(int(dad_read_depths[0]) + int(dad_read_depths[1]))
-                                # mom_geno_split = [char for char in mom_geno]
                                 if mom_geno[0] == '0':
                                     mom_rd_final.append(int(mom_read_depths[0]))
                                 else:
@@ -193,7 +191,7 @@ class Child:
                 backward_filter_results = np.zeros(2 * radius)
                 for i in range(2 * radius):
                     backward_filter_results[i] = (
-                                back_filter - diff_arr[right_border_starting_point:right_border_end_point]).sum()
+                            back_filter - diff_arr[right_border_starting_point:right_border_end_point]).sum()
                     right_border_starting_point += 1
                     right_border_end_point += 1
                 # Step 6: Take absolute value of the results and find the minimum value; then check tolerance

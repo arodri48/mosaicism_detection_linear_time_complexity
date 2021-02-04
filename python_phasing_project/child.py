@@ -131,14 +131,14 @@ class Child:
             # Step 2: Generate difference array between dad and mom rd
             diff_arr = self.dad_rd_array - self.mom_rd_array
             # Step 3: Calculate initial moments
-            moments = sandia_stats.statistical_moment_generator(diff_arr[0, samp_size])
+            moments = sandia_stats.m1_m2_moment_generator(diff_arr[0, samp_size])
             # Step 4: Calculate t-statistic for first window
             sample_var = (moments[1] / samp_size)
             t_values[0] = moments[0] / ((sample_var / samp_size) ** 0.5)
             # Step 5: Calculate t-values for rest of positions
             counter1 = 0
             counter2 = samp_size
-            mom_update_func = sandia_stats.moment_updater
+            mom_update_func = sandia_stats.m1_m2_moment_updater
             for i in range(self.child_ref_rd.size - samp_size):
                 moments = mom_update_func(moments, diff_arr[counter1], diff_arr[counter2], samp_size)
                 counter1 += 1

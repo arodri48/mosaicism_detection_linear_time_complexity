@@ -22,9 +22,11 @@ def statistical_moment_generator(data_arr):
 
 
 def m1_m2_moment_generator(data_arr):
+    # initialize variables
     n = 0.0
     mom1 = 0.0
     mom2 = 0.0
+    # Calculate first and second moments
     for x in np.nditer(data_arr):
         n += 1.0
         delta = x - mom1
@@ -34,15 +36,16 @@ def m1_m2_moment_generator(data_arr):
 
 
 def m1_m2_moment_updater(mom_list, old_value, new_value, win_size):
+    # initialize variables
     nm1 = win_size - 1.0
     mom1 = mom_list[0]
     mom2 = mom_list[1]
     old_val_min_mu = old_value - mom1
     old_val_min_mu_sqr = old_val_min_mu * old_val_min_mu
-
+    # remove contribution of old_value
     mom2 -= (win_size / nm1) * old_val_min_mu_sqr
     mom1 = (win_size * mom1 - old_value) / nm1
-
+    # add contribution of new_value
     delta = new_value - mom1
     mom1 += delta / win_size
     mom2 += delta * (new_value - mom1)

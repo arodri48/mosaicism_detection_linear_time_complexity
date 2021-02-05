@@ -127,28 +127,27 @@ class Child:
         else:
             nm1 = samp_size - 1
             # Step 1: Allocate an array that will store the t
-            t_values = np.zeros(self.child_ref_rd.size - samp_size + 1)
+            t_values = []
+            # t_values = np.empty(self.child_ref_rd.size - samp_size + 1)
             # Step 2: Generate difference array between dad and mom rd
-            diff_arr = self.dad_rd_array - self.mom_rd_array
+            diff_arr = (self.dad_rd_array - self.mom_rd_array).tolist()
             # Step 3: Calculate initial moments
             moments = sandia_stats.m1_m2_moment_generator(diff_arr[0, samp_size])
             # Step 4: Calculate t-statistic for first window
-            sample_var = (moments[1] / samp_size)
-            t_values[0] = moments[0] / ((sample_var / samp_size) ** 0.5)
+            sample_var = moments[1] / samp_size
+            t_values.append(moments[0] / ((sample_var / samp_size) ** 0.5))
             # Step 5: Calculate t-values for rest of positions
-            counter1 = 0
             counter2 = samp_size
             mom_update_func = sandia_stats.m1_m2_moment_updater
             for i in range(self.child_ref_rd.size - samp_size):
-                moments = mom_update_func(moments, diff_arr[counter1], diff_arr[counter2], samp_size)
-                counter1 += 1
+                moments = mom_update_func(moments, diff_arr[i], diff_arr[counter2], samp_size)
                 counter2 += 1
                 sample_var = moments[1] / samp_size
-                t_values[counter1] = moments[0] / ((sample_var / samp_size) ** 0.5)
+                t_values.append(moments[0] / ((sample_var / samp_size) ** 0.5))
             # Step 6: Find the t-critical value and determine if there are any samples that exceed it
             t_crit = t.ppf(0.95, nm1)
-            t_val_abs = np.abs(t_values)
-            index_of_mosaicism = np.argmax(t_val_abs > t_crit)
+            t_val_abs = [abs(val) for val in t_values]
+            index_of_mosaicism = next((i for i, elem in enumerate(t_val_abs) if elem > t_crit), 0)
             # if index_of_mosaicism is not equal to 0, update the start_of_mosaicism index
             if index_of_mosaicism > 0:
                 self.est_start_of_mosaicism = index_of_mosaicism + samp_size

@@ -27,7 +27,7 @@ def m1_m2_moment_generator(data_arr):
     mom1 = 0.0
     mom2 = 0.0
     # Calculate first and second moments
-    for x in np.nditer(data_arr):
+    for x in data_arr:
         n += 1.0
         delta = x - mom1
         mom1 += delta / n

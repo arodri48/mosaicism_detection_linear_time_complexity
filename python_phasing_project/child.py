@@ -10,13 +10,13 @@ class Child:
         self.name = child_name
         self.father_name = father_name
         self.mother_name = mother_name
-        self.pos_arr = np.zeros(2)
-        self.dad_rd_array = np.zeros(2)
-        self.mom_rd_array = np.zeros(2)
-        self.dad_ref_var_array = np.zeros(2)
-        self.mom_ref_var_array = np.zeros(2)
-        self.child_ref_rd = np.zeros(2)
-        self.child_var_rd = np.zeros(2)
+        self.pos_arr = np.empty(1)
+        self.dad_rd_array = np.empty(1)
+        self.mom_rd_array = np.empty(1)
+        self.dad_ref_var_array = np.empty(1)
+        self.mom_ref_var_array = np.empty(1)
+        self.child_ref_rd = np.empty(1)
+        self.child_var_rd = np.empty(1)
         self.est_start_of_mosaicism = 0
         self.left_border_mosaicism_region = 0
         self.right_border_mosaicism_region = 0
@@ -54,6 +54,8 @@ class Child:
                     if 0 == dad_geno_count['.'] == mom_geno_count['.']:
                         dad_read_depths = dad_line_info[1].split(',')
                         mom_read_depths = mom_line_info[1].split(',')
+                        # TODO: Save which allele came from which parent and the read depths in the child associated
+                        # TODO: with that parent
                         # save the position number and then the read depth for the child
                         pos_final.append(row['POS'])
                         if child_info[0][2] == '1':
@@ -134,18 +136,16 @@ class Child:
             # Step 3: Calculate initial moments
             moments = sandia_stats.m1_m2_moment_generator(diff_arr[0, samp_size])
             # Step 4: Calculate t-statistic for first window
-            sample_var = moments[1] / samp_size
-            t_values.append(moments[0] / ((sample_var / samp_size) ** 0.5))
+            t_values.append(moments[0] / ((moments[1] / samp_size / samp_size) ** 0.5))
             # Step 5: Calculate t-values for rest of positions
             counter2 = samp_size
             mom_update_func = sandia_stats.m1_m2_moment_updater
             for i in range(self.child_ref_rd.size - samp_size):
                 moments = mom_update_func(moments, diff_arr[i], diff_arr[counter2], samp_size)
                 counter2 += 1
-                sample_var = moments[1] / samp_size
-                t_values.append(moments[0] / ((sample_var / samp_size) ** 0.5))
+                t_values.append(moments[0] / ((moments[1] / samp_size / samp_size) ** 0.5))
             # Step 6: Find the t-critical value and determine if there are any samples that exceed it
-            t_crit = t.ppf(0.95, nm1)
+            t_crit = t.ppf(0.95, nm1).item()
             t_val_abs = [abs(val) for val in t_values]
             index_of_mosaicism = next((i for i, elem in enumerate(t_val_abs) if elem > t_crit), 0)
             # if index_of_mosaicism is not equal to 0, update the start_of_mosaicism index
@@ -173,30 +173,27 @@ class Child:
             # Step 3: Implement the sliding filter
             starting_point = self.est_start_of_mosaicism - radius
             end_point = starting_point + 2 * filter_width
-            forward_filter_results = np.zeros(2 * radius)
-            for i in range(2 * radius):
-                forward_filter_results[i] = (front_filter - diff_arr[starting_point:end_point]).sum()
-                starting_point += 1
-                end_point += 1
+            forward_filter_results = [(front_filter - diff_arr[starting_point+i:end_point+i]).sum(dtype=float) for i in range(2*radius)]
             # Step 4: Take the absolute value of the results and find the minimum value; then check tolerance
-            abs_val_forward_filter_results = np.abs(forward_filter_results)
+            abs_val_forward_filter_results = [abs(elem) for elem in forward_filter_results]
+            # TODO: Get min value with pure python
             min_val = np.amin(abs_val_forward_filter_results)
             print("The minimum sum value for left border is " + str(min_val))
             if min_val < tolerance:
+                # todo: get min value index with pure python
                 self.left_border_mosaicism_region = starting_point + np.argmin(abs_val_forward_filter_results)
                 # Step 5: Implement the sliding filter to find the right edge (if exists)
                 right_border_starting_point = self.est_start_of_mosaicism
                 right_border_end_point = right_border_starting_point + 2 * filter_width
-                backward_filter_results = np.zeros(2 * radius)
-                for i in range(2 * radius):
-                    backward_filter_results[i] = (
-                            back_filter - diff_arr[right_border_starting_point:right_border_end_point]).sum()
-                    right_border_starting_point += 1
-                    right_border_end_point += 1
+                backward_filter_results = [(back_filter - diff_arr[right_border_starting_point + i:right_border_end_point + i]).sum(dtype=float) for i in range(2*radius)]
+
                 # Step 6: Take absolute value of the results and find the minimum value; then check tolerance
-                abs_val_backward_filter_results = np.abs(backward_filter_results)
+                abs_val_backward_filter_results = [abs(elem) for elem in backward_filter_results]
+                # TODO: Get min value with pure python
                 min_val = np.amin(abs_val_backward_filter_results)
                 print("The minimum sum value for right border is " + str(min_val))
                 # Set the value of the right border
+                # todo: get min value index with pure python
+
                 self.right_border_mosaicism_region = right_border_starting_point + np.argmin(
                     abs_val_backward_filter_results) if min_val < tolerance else diff_arr.size - 1

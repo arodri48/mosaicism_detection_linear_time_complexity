@@ -143,11 +143,10 @@ class Child:
             for i in range(self.child_ref_rd.size - samp_size):
                 moments = mom_update_func(moments, diff_arr[i], diff_arr[counter2], samp_size)
                 counter2 += 1
-                t_values.append(moments[0] / ((moments[1] / samp_size / samp_size) ** 0.5))
+                t_values.append(abs(moments[0] / ((moments[1] / samp_size / samp_size) ** 0.5)))
             # Step 6: Find the t-critical value and determine if there are any samples that exceed it
             t_crit = t.ppf(0.95, nm1).item()
-            t_val_abs = [abs(val) for val in t_values]
-            index_of_mosaicism = next((i for i, elem in enumerate(t_val_abs) if elem > t_crit), 0)
+            index_of_mosaicism = next((i for i, elem in enumerate(t_values) if elem > t_crit), 0)
             # if index_of_mosaicism is not equal to 0, update the start_of_mosaicism index
             if index_of_mosaicism > 0:
                 self.est_start_of_mosaicism = index_of_mosaicism + samp_size
@@ -173,27 +172,21 @@ class Child:
             # Step 3: Implement the sliding filter
             starting_point = self.est_start_of_mosaicism - radius
             end_point = starting_point + 2 * filter_width
-            forward_filter_results = [(front_filter - diff_arr[starting_point+i:end_point+i]).sum(dtype=float) for i in range(2*radius)]
+            forward_filter_results = [abs((front_filter - diff_arr[starting_point+i:end_point+i]).sum(dtype=float)) for i in range(2*radius)]
             # Step 4: Take the absolute value of the results and find the minimum value; then check tolerance
-            abs_val_forward_filter_results = [abs(elem) for elem in forward_filter_results]
-            # TODO: Get min value with pure python
-            min_val = np.amin(abs_val_forward_filter_results)
+            min_val = min(forward_filter_results)
             print("The minimum sum value for left border is " + str(min_val))
             if min_val < tolerance:
-                # todo: get min value index with pure python
-                self.left_border_mosaicism_region = starting_point + np.argmin(abs_val_forward_filter_results)
+                self.left_border_mosaicism_region = starting_point + forward_filter_results.index(min_val)
                 # Step 5: Implement the sliding filter to find the right edge (if exists)
                 right_border_starting_point = self.est_start_of_mosaicism
                 right_border_end_point = right_border_starting_point + 2 * filter_width
-                backward_filter_results = [(back_filter - diff_arr[right_border_starting_point + i:right_border_end_point + i]).sum(dtype=float) for i in range(2*radius)]
+                backward_filter_results = [abs((back_filter - diff_arr[right_border_starting_point + i:right_border_end_point + i]).sum(dtype=float)) for i in range(2*radius)]
 
                 # Step 6: Take absolute value of the results and find the minimum value; then check tolerance
-                abs_val_backward_filter_results = [abs(elem) for elem in backward_filter_results]
-                # TODO: Get min value with pure python
-                min_val = np.amin(abs_val_backward_filter_results)
+                min_val = min(backward_filter_results)
                 print("The minimum sum value for right border is " + str(min_val))
                 # Set the value of the right border
-                # todo: get min value index with pure python
 
-                self.right_border_mosaicism_region = right_border_starting_point + np.argmin(
-                    abs_val_backward_filter_results) if min_val < tolerance else diff_arr.size - 1
+                self.right_border_mosaicism_region = right_border_starting_point + backward_filter_results.index(
+                    min_val) if min_val < tolerance else diff_arr.size - 1

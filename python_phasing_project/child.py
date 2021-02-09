@@ -13,10 +13,6 @@ class Child:
         self.pos_arr = np.empty(1)
         self.dad_rd_array = np.empty(1)
         self.mom_rd_array = np.empty(1)
-        self.dad_ref_var_array = np.empty(1)
-        self.mom_ref_var_array = np.empty(1)
-        self.child_ref_rd = np.empty(1)
-        self.child_var_rd = np.empty(1)
         self.est_start_of_mosaicism = 0
         self.left_border_mosaicism_region = 0
         self.right_border_mosaicism_region = 0
@@ -24,107 +20,90 @@ class Child:
     def phasable_snp_determiner(self, chr_df):
         # first make temporary helper variables
         pos_final = []
-        dad_ref_var_final = []
-        mom_ref_var_final = []
         dad_rd_final = []
         mom_rd_final = []
-        child_ref_rd_final = []
-        child_var_rd_final = []
+
         het_set = {"0/1", "1/0", "1|0", "0|1"}
 
         # iterate through every row
         for index, row in chr_df.iterrows():
             child_info = row[self.name].split(':', 3)
             child_read_depths = child_info[1].split(',')
-            if child_info[0] in het_set and (4 < int(child_read_depths[0]) < 75) and (
-                    4 < int(child_read_depths[1]) < 75):
+            child_rd_first = int(child_read_depths[0])
+            child_rd_second = int(child_read_depths[1])
+            if child_info[0] in het_set and (4 < child_rd_first < 75) and (4 < child_rd_second < 75):
                 # proband is a het; need to check the parents and check at least one is homozygous and if they are
                 # both homozygous, not for same allele
-                mom_line_info = row[self.mother_name].split(':', 3)
-                dad_line_info = row[self.father_name].split(':', 3)
-                dad_geno = dad_line_info[0]
-                mom_geno = mom_line_info[0]
-
-                mom_geno_count = Counter(mom_geno)
-                dad_geno_count = Counter(dad_geno)
-                if not ((3 == len(mom_geno_count) == len(dad_geno_count)) or (
+                mom_line_info = row[self.mother_name].split(':', 2)
+                dad_line_info = row[self.father_name].split(':', 2)
+                mom_geno_count = Counter(mom_line_info[0])
+                dad_geno_count = Counter(dad_line_info[0])
+                if not ((3 == len(mom_geno_count) == len(dad_geno_count)) or
                         (2 == mom_geno_count['0'] == dad_geno_count['0']) or (
-                        2 == mom_geno_count['1'] == dad_geno_count['1'])
-                )):
+                        2 == mom_geno_count['1'] == dad_geno_count['1'])):
                     if 0 == dad_geno_count['.'] == mom_geno_count['.']:
-                        dad_read_depths = dad_line_info[1].split(',')
-                        mom_read_depths = mom_line_info[1].split(',')
-                        # TODO: Save which allele came from which parent and the read depths in the child associated
-                        # TODO: with that parent
                         # save the position number and then the read depth for the child
                         pos_final.append(row['POS'])
-                        if child_info[0][2] == '1':
-                            child_ref_rd_final.append(int(child_read_depths[0]))
-                            child_var_rd_final.append(int(child_read_depths[1]))
-                        else:
-                            child_ref_rd_final.append(int(child_read_depths[1]))
-                            child_var_rd_final.append(int(child_read_depths[0]))
-                        # determine which parent each allele came from and save the read depth for that parent's allele
+                        # case 1: Dad is hom var and mom is hom ref
                         if 2 == dad_geno_count['1'] == mom_geno_count['0']:
-                            dad_ref_var_final.append(1)
-                            mom_ref_var_final.append(0)
-                            # obtain and store read count
-                            dad_rd_final.append(int(dad_read_depths[0]) + int(dad_read_depths[1]))
-                            mom_rd_final.append(int(mom_read_depths[0]) + int(mom_read_depths[1]))
+                            if child_info[0][0] == '1':
+                                dad_rd_final.append(child_rd_first)
+                                mom_rd_final.append(child_rd_second)
+                            else:
+                                dad_rd_final.append(child_rd_second)
+                                mom_rd_final.append(child_rd_first)
+                        # case 2: mom is hom var and dad is hom ref
                         elif 2 == dad_geno_count['0'] == mom_geno_count['1']:
-                            dad_ref_var_final.append(0)
-                            mom_ref_var_final.append(1)
-                            # obtain and store read count
-                            dad_rd_final.append(int(dad_read_depths[0]) + int(dad_read_depths[1]))
-                            mom_rd_final.append(int(mom_read_depths[0]) + int(mom_read_depths[1]))
+                            if child_info[0][0] == '1':
+                                dad_rd_final.append(child_rd_second)
+                                mom_rd_final.append(child_rd_first)
+                            else:
+                                dad_rd_final.append(child_rd_first)
+                                mom_rd_final.append(child_rd_second)
+                        # case 3: Dad is a het
                         elif len(dad_geno_count) == 3:
+                            # if mom is hom ref
                             if mom_geno_count['0'] == 2:
-                                mom_ref_var_final.append(0)
-                                dad_ref_var_final.append(1)
-                                mom_rd_final.append(int(mom_read_depths[0]) + int(mom_read_depths[1]))
-                                # dad_geno_split = [char for char in dad_geno]
-                                if dad_geno[0] == '1':
-                                    dad_rd_final.append(int(dad_read_depths[0]))
+                                if child_info[0][0] == '0':
+                                    dad_rd_final.append(child_rd_second)
+                                    mom_rd_final.append(child_rd_first)
                                 else:
-                                    dad_rd_final.append(int(dad_read_depths[1]))
+                                    dad_rd_final.append(child_rd_first)
+                                    mom_rd_final.append(child_rd_second)
+                            # if mom is hom var
                             else:
-                                # mom_geno is hom_var
-                                mom_ref_var_final.append(1)
-                                dad_ref_var_final.append(0)
-                                mom_rd_final.append(int(mom_read_depths[0]) + int(mom_read_depths[1]))
-                                # dad_geno_split = [char for char in dad_geno]
-                                if dad_geno[0] == '0':
-                                    dad_rd_final.append(int(dad_read_depths[0]))
+                                if child_info[0][0] == '1':
+                                    dad_rd_final.append(child_rd_second)
+                                    mom_rd_final.append(child_rd_first)
                                 else:
-                                    dad_rd_final.append(int(dad_read_depths[1]))
+                                    dad_rd_final.append(child_rd_first)
+                                    mom_rd_final.append(child_rd_second)
+                        # case 4: Mom is a het
                         else:
+                            # if dad is hom ref
                             if dad_geno_count['0'] == 2:
-                                mom_ref_var_final.append(1)
-                                dad_ref_var_final.append(0)
-                                dad_rd_final.append(int(dad_read_depths[0]) + int(dad_read_depths[1]))
-                                if mom_geno[0] == '1':
-                                    mom_rd_final.append(int(mom_read_depths[0]))
+                                if child_info[0][0] == '0':
+                                    dad_rd_final.append(child_rd_first)
+                                    mom_rd_final.append(child_rd_second)
                                 else:
-                                    mom_rd_final.append(int(mom_read_depths[1]))
+                                    dad_rd_final.append(child_rd_second)
+                                    mom_rd_final.append(child_rd_first)
+                            # if dad is hom var
                             else:
-                                mom_ref_var_final.append(0)
-                                dad_ref_var_final.append(1)
-                                dad_rd_final.append(int(dad_read_depths[0]) + int(dad_read_depths[1]))
-                                if mom_geno[0] == '0':
-                                    mom_rd_final.append(int(mom_read_depths[0]))
+                                if child_info[0][0] == '1':
+                                    dad_rd_final.append(child_rd_first)
+                                    mom_rd_final.append(child_rd_second)
                                 else:
-                                    mom_rd_final.append(int(mom_read_depths[1]))
-        self.pos_arr = np.array(pos_final)
+                                    dad_rd_final.append(child_rd_second)
+                                    mom_rd_final.append(child_rd_first)
+
+        self.pos_arr = pos_final
         self.mom_rd_array = np.array(mom_rd_final)
         self.dad_rd_array = np.array(dad_rd_final)
-        self.dad_ref_var_array = np.array(dad_ref_var_final)
-        self.mom_ref_var_array = np.array(mom_ref_var_final)
-        self.child_ref_rd = np.array(child_ref_rd_final)
-        self.child_var_rd = np.array(child_var_rd_final)
 
     def t_test_snps(self, samp_size):
 
-        if samp_size > self.child_ref_rd.size:
+        if samp_size > self.mom_rd_array.size:
             print("Sample size is larger than total number of data points")
         else:
             nm1 = samp_size - 1
@@ -140,19 +119,21 @@ class Child:
             # Step 5: Calculate t-values for rest of positions
             counter2 = samp_size
             mom_update_func = sandia_stats.m1_m2_moment_updater
-            for i in range(self.child_ref_rd.size - samp_size):
+            for i in range(self.mom_rd_array.size - samp_size):
                 moments = mom_update_func(moments, diff_arr[i], diff_arr[counter2], samp_size)
                 counter2 += 1
                 t_values.append(abs(moments[0] / ((moments[1] / samp_size / samp_size) ** 0.5)))
             # Step 6: Find the t-critical value and determine if there are any samples that exceed it
             t_crit = t.ppf(0.95, nm1).item()
             index_of_mosaicism = next((i for i, elem in enumerate(t_values) if elem > t_crit), 0)
+            # TODO: Think about what position I am storing; might need to create an extra new variable
             # if index_of_mosaicism is not equal to 0, update the start_of_mosaicism index
             if index_of_mosaicism > 0:
                 self.est_start_of_mosaicism = index_of_mosaicism + samp_size
                 print("Mosaicism has been detected in child " + self.name)
 
     def edge_detection(self, filter_width, radius=100, tolerance=0.1):
+        # TODO: Check over this code in response to what I do to t_test_snps
         # filter_width must be much less than radius
         if filter_width >= radius:
             print("Filter width larger than radius around starting point")

@@ -13,6 +13,7 @@ def read_VCF(vcf_path, name_list):
     for elem in name_list:
         df[elem] = df[elem].astype('str')
     df['QUAL'] = pd.to_numeric(df['QUAL'], errors='coerce')
+    df['POS'] = pd.to_numeric(df['POS'], errors='coerce')
     return df
 
 

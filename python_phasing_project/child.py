@@ -23,81 +23,79 @@ class Child:
         pos_final = []
         dad_rd_final = []
         mom_rd_final = []
-
         het_set = {"0/1", "1/0", "1|0", "0|1"}
-
         # iterate through every row
         for index, row in chr_df.iterrows():
             child_info = row[self.name].split(':', 3)
-            child_read_depths = child_info[1].split(',')
-            child_rd_first = int(child_read_depths[0])
-            child_rd_second = int(child_read_depths[1])
-            if child_info[0] in het_set and (4 < child_rd_first < 75) and (4 < child_rd_second < 75):
-                # proband is a het; need to check the parents and check at least one is homozygous and if they are
-                # both homozygous, not for same allele
-                mom_line_info = row[self.mother_name].split(':', 2)
-                dad_line_info = row[self.father_name].split(':', 2)
-                mom_geno_count = Counter(mom_line_info[0])
-                dad_geno_count = Counter(dad_line_info[0])
-                if not ((3 == len(mom_geno_count) == len(dad_geno_count)) or
-                        (2 == mom_geno_count['0'] == dad_geno_count['0']) or (
-                        2 == mom_geno_count['1'] == dad_geno_count['1'])):
-                    if 0 == dad_geno_count['.'] == mom_geno_count['.']:
-                        # save the position number and then the read depth for the child
-                        pos_final.append(row['POS'])
-                        # case 1: Dad is hom var and mom is hom ref
-                        if 2 == dad_geno_count['1'] == mom_geno_count['0']:
-                            if child_info[0][0] == '1':
-                                dad_rd_final.append(child_rd_first)
-                                mom_rd_final.append(child_rd_second)
-                            else:
-                                dad_rd_final.append(child_rd_second)
-                                mom_rd_final.append(child_rd_first)
-                        # case 2: mom is hom var and dad is hom ref
-                        elif 2 == dad_geno_count['0'] == mom_geno_count['1']:
-                            if child_info[0][0] == '1':
-                                dad_rd_final.append(child_rd_second)
-                                mom_rd_final.append(child_rd_first)
-                            else:
-                                dad_rd_final.append(child_rd_first)
-                                mom_rd_final.append(child_rd_second)
-                        # case 3: Dad is a het
-                        elif len(dad_geno_count) == 3:
-                            # if mom is hom ref
-                            if mom_geno_count['0'] == 2:
-                                if child_info[0][0] == '0':
-                                    dad_rd_final.append(child_rd_second)
-                                    mom_rd_final.append(child_rd_first)
-                                else:
-                                    dad_rd_final.append(child_rd_first)
-                                    mom_rd_final.append(child_rd_second)
-                            # if mom is hom var
-                            else:
-                                if child_info[0][0] == '1':
-                                    dad_rd_final.append(child_rd_second)
-                                    mom_rd_final.append(child_rd_first)
-                                else:
-                                    dad_rd_final.append(child_rd_first)
-                                    mom_rd_final.append(child_rd_second)
-                        # case 4: Mom is a het
-                        else:
-                            # if dad is hom ref
-                            if dad_geno_count['0'] == 2:
-                                if child_info[0][0] == '0':
-                                    dad_rd_final.append(child_rd_first)
-                                    mom_rd_final.append(child_rd_second)
-                                else:
-                                    dad_rd_final.append(child_rd_second)
-                                    mom_rd_final.append(child_rd_first)
-                            # if dad is hom var
-                            else:
+            if child_info[0] in het_set:
+                child_read_depths = child_info[1].split(',')
+                child_rd_first = int(child_read_depths[0])
+                child_rd_second = int(child_read_depths[1])
+                if (4 < child_rd_first < 75) and (4 < child_rd_second < 75):
+                    # proband is a het; need to check the parents and check at least one is homozygous and if they are
+                    # both homozygous, not for same allele
+                    mom_line_info = row[self.mother_name].split(':', 2)
+                    dad_line_info = row[self.father_name].split(':', 2)
+                    mom_geno_count = Counter(mom_line_info[0])
+                    dad_geno_count = Counter(dad_line_info[0])
+                    if not ((3 == len(mom_geno_count) == len(dad_geno_count)) or
+                            (2 == mom_geno_count['0'] == dad_geno_count['0']) or (
+                            2 == mom_geno_count['1'] == dad_geno_count['1'])):
+                        if 0 == dad_geno_count['.'] == mom_geno_count['.']:
+                            # save the position number and then the read depth for the child
+                            pos_final.append(row['POS'])
+                            # case 1: Dad is hom var and mom is hom ref
+                            if 2 == dad_geno_count['1'] == mom_geno_count['0']:
                                 if child_info[0][0] == '1':
                                     dad_rd_final.append(child_rd_first)
                                     mom_rd_final.append(child_rd_second)
                                 else:
                                     dad_rd_final.append(child_rd_second)
                                     mom_rd_final.append(child_rd_first)
-
+                            # case 2: mom is hom var and dad is hom ref
+                            elif 2 == dad_geno_count['0'] == mom_geno_count['1']:
+                                if child_info[0][0] == '1':
+                                    dad_rd_final.append(child_rd_second)
+                                    mom_rd_final.append(child_rd_first)
+                                else:
+                                    dad_rd_final.append(child_rd_first)
+                                    mom_rd_final.append(child_rd_second)
+                            # case 3: Dad is a het
+                            elif len(dad_geno_count) == 3:
+                                # if mom is hom ref
+                                if mom_geno_count['0'] == 2:
+                                    if child_info[0][0] == '0':
+                                        dad_rd_final.append(child_rd_second)
+                                        mom_rd_final.append(child_rd_first)
+                                    else:
+                                        dad_rd_final.append(child_rd_first)
+                                        mom_rd_final.append(child_rd_second)
+                                # if mom is hom var
+                                else:
+                                    if child_info[0][0] == '1':
+                                        dad_rd_final.append(child_rd_second)
+                                        mom_rd_final.append(child_rd_first)
+                                    else:
+                                        dad_rd_final.append(child_rd_first)
+                                        mom_rd_final.append(child_rd_second)
+                            # case 4: Mom is a het
+                            else:
+                                # if dad is hom ref
+                                if dad_geno_count['0'] == 2:
+                                    if child_info[0][0] == '0':
+                                        dad_rd_final.append(child_rd_first)
+                                        mom_rd_final.append(child_rd_second)
+                                    else:
+                                        dad_rd_final.append(child_rd_second)
+                                        mom_rd_final.append(child_rd_first)
+                                # if dad is hom var
+                                else:
+                                    if child_info[0][0] == '1':
+                                        dad_rd_final.append(child_rd_first)
+                                        mom_rd_final.append(child_rd_second)
+                                    else:
+                                        dad_rd_final.append(child_rd_second)
+                                        mom_rd_final.append(child_rd_first)
         self.pos_arr = pos_final
         self.mom_rd_array = np.array(mom_rd_final)
         self.dad_rd_array = np.array(dad_rd_final)

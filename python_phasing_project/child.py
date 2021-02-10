@@ -17,6 +17,9 @@ class Child:
         self.index_diff_arr_start_of_mosaicism = 0
         self.left_border_mosaicism_region = 0
         self.right_border_mosaicism_region = 0
+        self.t_values = []
+        self.forward_filter_results = []
+        self.backward_filter_results = []
 
     def phasable_snp_determiner(self, chr_df):
         # first make temporary helper variables
@@ -29,6 +32,7 @@ class Child:
             child_info = row[self.name].split(':', 3)
             if child_info[0] in het_set:
                 child_read_depths = child_info[1].split(',')
+                #print(child_read_depths)
                 child_rd_first = int(child_read_depths[0])
                 child_rd_second = int(child_read_depths[1])
                 if (4 < child_rd_first < 75) and (4 < child_rd_second < 75):
@@ -112,7 +116,7 @@ class Child:
             # Step 2: Generate difference array between dad and mom rd
             diff_arr = (self.dad_rd_array - self.mom_rd_array).tolist()
             # Step 3: Calculate initial moments
-            moments = sandia_stats.m1_m2_moment_generator(diff_arr[0, samp_size])
+            moments = sandia_stats.m1_m2_moment_generator(diff_arr[0:samp_size])
             # Step 4: Calculate t-statistic for first window
             t_values.append(moments[0] / ((moments[1] / samp_size / samp_size) ** 0.5))
             # Step 5: Calculate t-values for rest of positions
@@ -126,6 +130,7 @@ class Child:
             t_crit = t.ppf(0.95, nm1).item()
             index_of_mosaicism = next((i for i, elem in enumerate(t_values) if elem > t_crit), 0)
             # if index_of_mosaicism is not equal to 0, update the start_of_mosaicism index
+            self.t_values = t_values
             if index_of_mosaicism > 0:
                 # obtain VCF position from pos_arr
                 self.vcf_pos_start_of_mosaicism = self.pos_arr[index_of_mosaicism + samp_size]
@@ -153,6 +158,7 @@ class Child:
             starting_point = self.index_diff_arr_start_of_mosaicism - radius
             end_point = starting_point + 2 * filter_width
             forward_filter_results = [abs((front_filter - diff_arr[starting_point+i:end_point+i]).sum(dtype=float)) for i in range(2*radius)]
+            self.forward_filter_results = forward_filter_results
             # Step 4: Take the absolute value of the results and find the minimum value; then check tolerance
             min_val = min(forward_filter_results)
             print("The minimum sum value for left border is " + str(min_val))
@@ -162,7 +168,7 @@ class Child:
                 right_border_starting_point = self.index_diff_arr_start_of_mosaicism
                 right_border_end_point = right_border_starting_point + 2 * filter_width
                 backward_filter_results = [abs((back_filter - diff_arr[right_border_starting_point + i:right_border_end_point + i]).sum(dtype=float)) for i in range(2*radius)]
-
+                self.backward_filter_results = backward_filter_results
                 # Step 6: Take absolute value of the results and find the minimum value; then check tolerance
                 min_val = min(backward_filter_results)
                 print("The minimum sum value for right border is " + str(min_val))

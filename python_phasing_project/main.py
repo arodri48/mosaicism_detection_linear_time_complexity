@@ -30,7 +30,7 @@ def main(config_file_path):
     # Step 7: Check if a child is mosaic
     mosaic_child_present = False
     for elem in children:
-        if elem.est_start_of_mosaicism != 0:
+        if elem.index_diff_arr_start_of_mosaicism != 0:
             mosaic_child_present = True
             # detect region of mosaicism in the child
 

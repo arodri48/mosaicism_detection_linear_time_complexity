@@ -13,7 +13,8 @@ class Child:
         self.pos_arr = np.empty(1)
         self.dad_rd_array = np.empty(1)
         self.mom_rd_array = np.empty(1)
-        self.est_start_of_mosaicism = 0
+        self.vcf_pos_start_of_mosaicism = 0
+        self.index_diff_arr_start_of_mosaicism = 0
         self.left_border_mosaicism_region = 0
         self.right_border_mosaicism_region = 0
 
@@ -126,14 +127,14 @@ class Child:
             # Step 6: Find the t-critical value and determine if there are any samples that exceed it
             t_crit = t.ppf(0.95, nm1).item()
             index_of_mosaicism = next((i for i, elem in enumerate(t_values) if elem > t_crit), 0)
-            # TODO: Think about what position I am storing; might need to create an extra new variable
             # if index_of_mosaicism is not equal to 0, update the start_of_mosaicism index
             if index_of_mosaicism > 0:
-                self.est_start_of_mosaicism = index_of_mosaicism + samp_size
+                # obtain VCF position from pos_arr
+                self.vcf_pos_start_of_mosaicism = self.pos_arr[index_of_mosaicism + samp_size]
+                self.index_diff_arr_start_of_mosaicism = index_of_mosaicism + samp_size
                 print("Mosaicism has been detected in child " + self.name)
 
     def edge_detection(self, filter_width, radius=100, tolerance=0.1):
-        # TODO: Check over this code in response to what I do to t_test_snps
         # filter_width must be much less than radius
         if filter_width >= radius:
             print("Filter width larger than radius around starting point")
@@ -142,7 +143,7 @@ class Child:
         else:
             # Step 1: Using the difference between the read depths, find the height
             diff_arr = self.dad_rd_array - self.mom_rd_array
-            height = diff_arr[self.est_start_of_mosaicism + radius] - diff_arr[self.est_start_of_mosaicism - radius]
+            height = diff_arr[self.index_diff_arr_start_of_mosaicism + radius] - diff_arr[self.index_diff_arr_start_of_mosaicism - radius]
 
             # Step 2: Create the filter arrays
             front_filter = np.zeros(2 * filter_width)
@@ -151,16 +152,16 @@ class Child:
             back_filter[0:filter_width] = height
 
             # Step 3: Implement the sliding filter
-            starting_point = self.est_start_of_mosaicism - radius
+            starting_point = self.index_diff_arr_start_of_mosaicism - radius
             end_point = starting_point + 2 * filter_width
             forward_filter_results = [abs((front_filter - diff_arr[starting_point+i:end_point+i]).sum(dtype=float)) for i in range(2*radius)]
             # Step 4: Take the absolute value of the results and find the minimum value; then check tolerance
             min_val = min(forward_filter_results)
             print("The minimum sum value for left border is " + str(min_val))
             if min_val < tolerance:
-                self.left_border_mosaicism_region = starting_point + forward_filter_results.index(min_val)
+                self.left_border_mosaicism_region = self.pos_arr[starting_point + forward_filter_results.index(min_val)]
                 # Step 5: Implement the sliding filter to find the right edge (if exists)
-                right_border_starting_point = self.est_start_of_mosaicism
+                right_border_starting_point = self.index_diff_arr_start_of_mosaicism
                 right_border_end_point = right_border_starting_point + 2 * filter_width
                 backward_filter_results = [abs((back_filter - diff_arr[right_border_starting_point + i:right_border_end_point + i]).sum(dtype=float)) for i in range(2*radius)]
 
@@ -168,6 +169,5 @@ class Child:
                 min_val = min(backward_filter_results)
                 print("The minimum sum value for right border is " + str(min_val))
                 # Set the value of the right border
-
-                self.right_border_mosaicism_region = right_border_starting_point + backward_filter_results.index(
-                    min_val) if min_val < tolerance else diff_arr.size - 1
+                self.right_border_mosaicism_region = self.pos_arr[right_border_starting_point + backward_filter_results.index(
+                    min_val)] if min_val < tolerance else self.pos_arr[diff_arr.size - 1]

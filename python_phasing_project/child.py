@@ -2,6 +2,7 @@ import numpy as np
 import sandia_stats
 from scipy.stats import t
 from collections import Counter
+from statistics import mean, pvariance
 
 
 class Child:
@@ -18,6 +19,7 @@ class Child:
         self.left_border_mosaicism_region = 0
         self.right_border_mosaicism_region = 0
         self.t_values = []
+        self.naive_t_values = []
         self.forward_filter_results = []
         self.backward_filter_results = []
 
@@ -136,6 +138,19 @@ class Child:
                 self.vcf_pos_start_of_mosaicism = self.pos_arr[index_of_mosaicism + samp_size]
                 self.index_diff_arr_start_of_mosaicism = index_of_mosaicism + samp_size
                 print("Mosaicism has been detected in child " + self.name)
+
+    def naive_t_test_snps(self, samp_size):
+        if samp_size > self.mom_rd_array.size:
+            print("Sample size is larger than total number of data points")
+        else:
+            # Step 2: Generate difference array between dad and mom rd
+            diff_arr = (self.dad_rd_array - self.mom_rd_array).tolist()
+            # Step 3: Generate t_values naively
+            self.naive_t_values = [abs(mean(diff_arr[i:samp_size + i]) / (pvariance(diff_arr[i:samp_size + i]) / samp_size)**0.5) for i in range(self.mom_rd_array.size - samp_size + 1)]
+
+
+
+
 
     def edge_detection(self, filter_width, radius=100, tolerance=0.1):
         # filter_width must be much less than radius

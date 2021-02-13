@@ -144,9 +144,13 @@ class Child:
             print("Sample size is larger than total number of data points")
         else:
             # Step 2: Generate difference array between dad and mom rd
-            diff_arr = (self.dad_rd_array - self.mom_rd_array).tolist()
+            diff_arr = (self.dad_rd_array - self.mom_rd_array)
             # Step 3: Generate t_values naively
-            self.naive_t_values = [abs(mean(diff_arr[i:samp_size + i]) / (pvariance(diff_arr[i:samp_size + i]) / samp_size)**0.5) for i in range(self.mom_rd_array.size - samp_size + 1)]
+            t_vals = []
+            for i in range(self.mom_rd_array.size - samp_size + 1):
+                local_arr = diff_arr[i:samp_size + i]
+                t_vals.append(abs(local_arr.mean() / (local_arr.var() / samp_size)**0.5))
+            self.naive_t_values = t_vals
 
 
 

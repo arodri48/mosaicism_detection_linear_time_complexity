@@ -22,6 +22,11 @@ def filter_VCF_by_chr_and_SNP(df, chr_number):
             df['QUAL'] > 100)].reset_index(drop=True)
     return filtered_df
 
+def SNP_filter(df):
+    filtered_df = df[(df['REF'].str.len() == 1) & (df['ALT'].str.len() == 1) & (
+            df['QUAL'] > 100)].reset_index(drop=True)
+    return filtered_df
+
 
 def ped_file_reader(ped_file_path):
     with open(ped_file_path, 'r') as f:

@@ -135,14 +135,14 @@ class Child:
             self.t_values = t_values
             if index_of_mosaicism > -1:
                 # obtain VCF position from pos_arr
-                self.vcf_pos_start_of_mosaicism = self.pos_arr[index_of_mosaicism + samp_size -1]
-                self.index_diff_arr_start_of_mosaicism = index_of_mosaicism + samp_size - 1
+                self.vcf_pos_start_of_mosaicism = self.pos_arr[index_of_mosaicism + samp_size -1] if index_of_mosaicism != 0 else self.pos_arr[0]
+                self.index_diff_arr_start_of_mosaicism = index_of_mosaicism + samp_size - 1 if index_of_mosaicism != 0 else 0
                 # a region has been found; time to find end point
                 index_of_end_of_mosaicism = next(
                     (i+index_of_mosaicism+1 for i, elem in enumerate(t_values[index_of_mosaicism + 1:]) if elem < t_thres),
                     len(t_values) - 1)
-                self.vcf_pos_end_of_mosaicism = self.pos_arr[index_of_end_of_mosaicism + samp_size - 1]
-                self.index_diff_arr_end_of_mosaicism = index_of_end_of_mosaicism + samp_size - 1
+                self.vcf_pos_end_of_mosaicism = self.pos_arr[index_of_end_of_mosaicism + samp_size - 1] if index_of_end_of_mosaicism != len(t_values) - 1 else self.pos_arr[-1]
+                self.index_diff_arr_end_of_mosaicism = index_of_end_of_mosaicism + samp_size - 1 if index_of_end_of_mosaicism != len(t_values) - 1 else len(self.pos_arr) - 1
                 output = ["Mosaicism has been detected in child ", self.name, " with approximated start and end points at VCF positions ", str(self.vcf_pos_start_of_mosaicism), " and ", str(self.vcf_pos_end_of_mosaicism), ", respectively"]
                 print("".join(output))
 
@@ -159,7 +159,42 @@ class Child:
                 t_vals.append(abs(local_arr.mean() / (local_arr.var() / samp_size) ** 0.5))
             self.naive_t_values = t_vals
 
-    def edge_detection(self, filter_width, radius=100, tolerance=0.1):
+    def edge_detection(self, filter_width=100, radius=1000, tolerance=0.1, sample_size = 100):
+        # Step 1: Check if filter_width is less than radius and they are both integers
+        if not (isinstance(filter_width, int) or isinstance(radius, int)):
+            print("Either filter width or radius around starting point is not an integer")
+        elif filter_width >= radius:
+            print("Filter width larger than radius around starting point")
+        else:
+            # Step 2: Calculate difference between the read depths
+            diff_arr = self.dad_rd_array - self.mom_rd_array
+            # Step 3: Calculate estimated height of mosaic region by taking the mean of a sample around the estimated midpoint
+            avg_index = (self.index_diff_arr_start_of_mosaicism + self.index_diff_arr_end_of_mosaicism) // 2
+            height = diff_arr[avg_index - (sample_size//2):avg_index + (sample_size//2)].mean()
+            # Step 4: Determines edges based on case (3 cases)
+            # case 1: Mosaicism starts from the very left (since this is whole region, assume the first VCF position is the start)
+            if self.index_diff_arr_start_of_mosaicism == sample_size - 1:
+                print("region of mosaicism starts at very left of chromosome, need to find right edge")
+                final_filter_width = heh if self.index_diff_arr_end_of_mosaicism
+                right_filter = np.zeros(2*)
+            # case 2: Mosaicism starts from the very right
+            elif self.index_diff_arr_end_of_mosaicism == len(self.t_values) - 2 + sample_size:
+                print("region of mosaicism starts at very right, find the left edge")
+            # case 3: Mosaicism occurs within the middle
+            else:
+
+
+
+
+
+
+
+
+
+
+
+
+
         # TODO: rewrite edge detector with better methodology from t-test above
         # filter_width must be much less than radius
         if filter_width >= radius:

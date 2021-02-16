@@ -36,7 +36,7 @@ class Child:
             child_info = row[self.name].split(':', 3)
             if child_info[0] in het_set:
                 child_read_depths = child_info[1].split(',')
-                #print(child_read_depths)
+                # print(child_read_depths)
                 child_rd_first = int(child_read_depths[0])
                 child_rd_second = int(child_read_depths[1])
                 if (4 < child_rd_first < 75) and (4 < child_rd_second < 75):
@@ -48,7 +48,7 @@ class Child:
                     dad_geno_count = Counter(dad_line_info[0])
                     if not ((3 == len(mom_geno_count) == len(dad_geno_count)) or
                             (2 == mom_geno_count['0'] == dad_geno_count['0']) or (
-                            2 == mom_geno_count['1'] == dad_geno_count['1'])):
+                                    2 == mom_geno_count['1'] == dad_geno_count['1'])):
                         if 0 == dad_geno_count['.'] == mom_geno_count['.']:
                             # save the position number and then the read depth for the child
                             pos_final.append(row['POS'])
@@ -138,10 +138,13 @@ class Child:
                 self.vcf_pos_start_of_mosaicism = self.pos_arr[index_of_mosaicism + samp_size]
                 self.index_diff_arr_start_of_mosaicism = index_of_mosaicism + samp_size
                 # a region has been found; time to find end point
-                index_of_end_of_mosaicism = next((i for i, elem in enumerate(t_values[index_of_mosaicism+1:]) if elem < t_thres), len(t_values) - 1)
+                index_of_end_of_mosaicism = next(
+                    (i for i, elem in enumerate(t_values[index_of_mosaicism + 1:]) if elem < t_thres),
+                    len(t_values) - 1)
                 self.vcf_pos_end_of_mosaicism = self.pos_arr[index_of_end_of_mosaicism + samp_size]
                 self.index_diff_arr_end_of_mosaicism = index_of_end_of_mosaicism + samp_size
-                print("Mosaicism has been detected in child " + self.name)
+                output = ["Mosaicism has been detected in child ", self.name, " with start and end points at VCF positions ", str(self.vcf_pos_start_of_mosaicism), " and ", str(self.vcf_pos_end_of_mosaicism), ", respectively"]
+                print("".join(output))
 
     def naive_t_test_snps(self, samp_size):
         if samp_size > self.mom_rd_array.size:
@@ -153,12 +156,8 @@ class Child:
             t_vals = []
             for i in range(self.mom_rd_array.size - samp_size + 1):
                 local_arr = diff_arr[i:samp_size + i]
-                t_vals.append(abs(local_arr.mean() / (local_arr.var() / samp_size)**0.5))
+                t_vals.append(abs(local_arr.mean() / (local_arr.var() / samp_size) ** 0.5))
             self.naive_t_values = t_vals
-
-
-
-
 
     def edge_detection(self, filter_width, radius=100, tolerance=0.1):
         # TODO: rewrite edge detector with better methodology from t-test above
@@ -170,7 +169,8 @@ class Child:
         else:
             # Step 1: Using the difference between the read depths, find the height
             diff_arr = self.dad_rd_array - self.mom_rd_array
-            height = diff_arr[self.index_diff_arr_start_of_mosaicism + radius] - diff_arr[self.index_diff_arr_start_of_mosaicism - radius]
+            height = diff_arr[self.index_diff_arr_start_of_mosaicism + radius] - diff_arr[
+                self.index_diff_arr_start_of_mosaicism - radius]
 
             # Step 2: Create the filter arrays
             front_filter = np.zeros(2 * filter_width)
@@ -181,7 +181,8 @@ class Child:
             # Step 3: Implement the sliding filter
             starting_point = self.index_diff_arr_start_of_mosaicism - radius
             end_point = starting_point + 2 * filter_width
-            forward_filter_results = [abs((front_filter - diff_arr[starting_point+i:end_point+i]).sum(dtype=float)) for i in range(2*radius)]
+            forward_filter_results = [abs((front_filter - diff_arr[starting_point + i:end_point + i]).sum(dtype=float))
+                                      for i in range(2 * radius)]
             self.forward_filter_results = forward_filter_results
             # Step 4: Take the absolute value of the results and find the minimum value; then check tolerance
             min_val = min(forward_filter_results)
@@ -191,11 +192,14 @@ class Child:
                 # Step 5: Implement the sliding filter to find the right edge (if exists)
                 right_border_starting_point = self.index_diff_arr_start_of_mosaicism
                 right_border_end_point = right_border_starting_point + 2 * filter_width
-                backward_filter_results = [abs((back_filter - diff_arr[right_border_starting_point + i:right_border_end_point + i]).sum(dtype=float)) for i in range(2*radius)]
+                backward_filter_results = [abs(
+                    (back_filter - diff_arr[right_border_starting_point + i:right_border_end_point + i]).sum(
+                        dtype=float)) for i in range(2 * radius)]
                 self.backward_filter_results = backward_filter_results
                 # Step 6: Take absolute value of the results and find the minimum value; then check tolerance
                 min_val = min(backward_filter_results)
                 print("The minimum sum value for right border is " + str(min_val))
                 # Set the value of the right border
-                self.right_border_mosaicism_region = self.pos_arr[right_border_starting_point + backward_filter_results.index(
-                    min_val)] if min_val < tolerance else self.pos_arr[diff_arr.size - 1]
+                self.right_border_mosaicism_region = self.pos_arr[
+                    right_border_starting_point + backward_filter_results.index(
+                        min_val)] if min_val < tolerance else self.pos_arr[diff_arr.size - 1]

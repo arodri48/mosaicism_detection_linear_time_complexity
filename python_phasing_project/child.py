@@ -106,7 +106,7 @@ class Child:
         self.mom_rd_array = np.array(mom_rd_final)
         self.dad_rd_array = np.array(dad_rd_final)
 
-    def t_test_snps(self, samp_size):
+    def t_test_snps(self, samp_size=10000, t_thres=25):
 
         if samp_size > self.mom_rd_array.size:
             print("Sample size is larger than total number of data points")
@@ -129,8 +129,7 @@ class Child:
                 counter2 += 1
                 t_values.append(abs(moments[0] / ((moments[1] / samp_size / samp_size) ** 0.5)))
             # Step 6: Find the t-critical value and determine if there are any samples that exceed it
-            t_crit = t.ppf(0.95, nm1).item()
-            index_of_mosaicism = next((i for i, elem in enumerate(t_values) if elem > t_crit), 0)
+            index_of_mosaicism = next((i for i, elem in enumerate(t_values) if elem > t_thres), 0)
             # if index_of_mosaicism is not equal to 0, update the start_of_mosaicism index
             self.t_values = t_values
             if index_of_mosaicism > 0:

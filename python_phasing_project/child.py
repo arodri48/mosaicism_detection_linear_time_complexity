@@ -16,6 +16,8 @@ class Child:
         self.mom_rd_array = np.empty(1)
         self.vcf_pos_start_of_mosaicism = 0
         self.index_diff_arr_start_of_mosaicism = 0
+        self.vcf_pos_end_of_mosaicism = 0
+        self.index_diff_arr_end_of_mosaicism = 0
         self.left_border_mosaicism_region = 0
         self.right_border_mosaicism_region = 0
         self.t_values = []
@@ -127,18 +129,18 @@ class Child:
                 moments = mom_update_func(moments, diff_arr[i], diff_arr[counter2], samp_size)
                 counter2 += 1
                 t_values.append(abs(moments[0] / ((moments[1] / samp_size / samp_size) ** 0.5)))
-            # TODO: Attempt to coarsely find start and end point (used to find mindpoint of mosaic region when pinpointing)
             # Step 6: Find the t-critical value and determine if there are any samples that exceed it
-            index_of_mosaicism = next((i for i, elem in enumerate(t_values) if elem > t_thres), 0)
+            index_of_mosaicism = next((i for i, elem in enumerate(t_values) if elem > t_thres), -1)
             # if index_of_mosaicism is not equal to 0, update the start_of_mosaicism index
             self.t_values = t_values
-            if index_of_mosaicism > 0:
+            if index_of_mosaicism > -1:
                 # obtain VCF position from pos_arr
                 self.vcf_pos_start_of_mosaicism = self.pos_arr[index_of_mosaicism + samp_size]
                 self.index_diff_arr_start_of_mosaicism = index_of_mosaicism + samp_size
-                # TODO: this means a region has been found; time to find end point
-                index_of_end_of_mosaicism = next((i for i, elem in enumerate(t_values[index_of_mosaicism+1:] if )))
-
+                # a region has been found; time to find end point
+                index_of_end_of_mosaicism = next((i for i, elem in enumerate(t_values[index_of_mosaicism+1:]) if elem < t_thres), len(t_values) - 1)
+                self.vcf_pos_end_of_mosaicism = self.pos_arr[index_of_end_of_mosaicism + samp_size]
+                self.index_diff_arr_end_of_mosaicism = index_of_end_of_mosaicism + samp_size
                 print("Mosaicism has been detected in child " + self.name)
 
     def naive_t_test_snps(self, samp_size):

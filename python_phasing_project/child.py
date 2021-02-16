@@ -111,7 +111,6 @@ class Child:
         if samp_size > self.mom_rd_array.size:
             print("Sample size is larger than total number of data points")
         else:
-            nm1 = samp_size - 1
             # Step 1: Allocate an array that will store the t
             t_values = []
             # t_values = np.empty(self.child_ref_rd.size - samp_size + 1)
@@ -128,6 +127,7 @@ class Child:
                 moments = mom_update_func(moments, diff_arr[i], diff_arr[counter2], samp_size)
                 counter2 += 1
                 t_values.append(abs(moments[0] / ((moments[1] / samp_size / samp_size) ** 0.5)))
+            # TODO: Attempt to coarsely find start and end point (used to find mindpoint of mosaic region when pinpointing)
             # Step 6: Find the t-critical value and determine if there are any samples that exceed it
             index_of_mosaicism = next((i for i, elem in enumerate(t_values) if elem > t_thres), 0)
             # if index_of_mosaicism is not equal to 0, update the start_of_mosaicism index
@@ -136,6 +136,9 @@ class Child:
                 # obtain VCF position from pos_arr
                 self.vcf_pos_start_of_mosaicism = self.pos_arr[index_of_mosaicism + samp_size]
                 self.index_diff_arr_start_of_mosaicism = index_of_mosaicism + samp_size
+                # TODO: this means a region has been found; time to find end point
+                index_of_end_of_mosaicism = next((i for i, elem in enumerate(t_values[index_of_mosaicism+1:] if )))
+
                 print("Mosaicism has been detected in child " + self.name)
 
     def naive_t_test_snps(self, samp_size):
@@ -156,6 +159,7 @@ class Child:
 
 
     def edge_detection(self, filter_width, radius=100, tolerance=0.1):
+        # TODO: rewrite edge detector with better methodology from t-test above
         # filter_width must be much less than radius
         if filter_width >= radius:
             print("Filter width larger than radius around starting point")

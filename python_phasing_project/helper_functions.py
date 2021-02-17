@@ -27,6 +27,9 @@ def SNP_filter(df):
             df['QUAL'] > 100)].reset_index(drop=True)
     return filtered_df
 
+def chromosome_filter(df, chr_name):
+    filtered_df = df[(df["#CHROM"] == chr_name)].reset_index(drop=True)
+    return filtered_df
 
 def ped_file_reader(ped_file_path):
     with open(ped_file_path, 'r') as f:

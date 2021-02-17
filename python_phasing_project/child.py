@@ -7,7 +7,7 @@ from statistics import mean, pvariance
 
 class Child:
 
-    def __init__(self, child_name, father_name, mother_name):
+    def __init__(self, child_name, father_name, mother_name, SNP_df):
         self.name = child_name
         self.father_name = father_name
         self.mother_name = mother_name
@@ -24,6 +24,7 @@ class Child:
         self.naive_t_values = []
         self.forward_filter_results = []
         self.backward_filter_results = []
+        self.SNP_df = SNP_df
 
     def phasable_snp_determiner(self, chr_df):
         # first make temporary helper variables
@@ -104,9 +105,7 @@ class Child:
                                     else:
                                         dad_rd_final.append(child_rd_second)
                                         mom_rd_final.append(child_rd_first)
-        self.pos_arr = pos_final
-        self.mom_rd_array = np.array(mom_rd_final)
-        self.dad_rd_array = np.array(dad_rd_final)
+        return pos_final, np.array(mom_rd_final), np.array(dad_rd_final)
 
     def t_test_snps(self, samp_size=10000, t_thres=25):
 
@@ -160,28 +159,7 @@ class Child:
             self.naive_t_values = t_vals
 
     def edge_detection(self, filter_width=100, radius=1000, tolerance=0.1, sample_size = 100):
-        # Step 1: Check if filter_width is less than radius and they are both integers
-        if not (isinstance(filter_width, int) or isinstance(radius, int)):
-            print("Either filter width or radius around starting point is not an integer")
-        elif filter_width >= radius:
-            print("Filter width larger than radius around starting point")
-        else:
-            # Step 2: Calculate difference between the read depths
-            diff_arr = self.dad_rd_array - self.mom_rd_array
-            # Step 3: Calculate estimated height of mosaic region by taking the mean of a sample around the estimated midpoint
-            avg_index = (self.index_diff_arr_start_of_mosaicism + self.index_diff_arr_end_of_mosaicism) // 2
-            height = diff_arr[avg_index - (sample_size//2):avg_index + (sample_size//2)].mean()
-            # Step 4: Determines edges based on case (3 cases)
-            # case 1: Mosaicism starts from the very left (since this is whole region, assume the first VCF position is the start)
-            if self.index_diff_arr_start_of_mosaicism == sample_size - 1:
-                print("region of mosaicism starts at very left of chromosome, need to find right edge")
-                final_filter_width = heh if self.index_diff_arr_end_of_mosaicism
-                right_filter = np.zeros(2*)
-            # case 2: Mosaicism starts from the very right
-            elif self.index_diff_arr_end_of_mosaicism == len(self.t_values) - 2 + sample_size:
-                print("region of mosaicism starts at very right, find the left edge")
-            # case 3: Mosaicism occurs within the middle
-            else:
+       
 
 
 

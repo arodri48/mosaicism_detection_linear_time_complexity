@@ -1,6 +1,6 @@
 PED_FILE	C:\Users\rodriguezah\Desktop\mosaicism_phasing\UDP18111.ped
 VCF_FILE	C:\Users\rodriguezah\Desktop\mosaicism_phasing\cohort_joint_genotyped_UDP18111.vcf
-SAMPLE_SIZE    10000
-T_THRES    25
-OUTPUT_FILE    C:\Users\rodriguezah\Desktop\mosaicism_phasing\results.txt
+SAMPLE_SIZE	10000
+T_THRES	25
+OUTPUT_FILE	C:\Users\rodriguezah\Desktop\mosaicism_phasing\results2.txt
 PROBAND_NAME	UDP18111

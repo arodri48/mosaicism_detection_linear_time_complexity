@@ -105,6 +105,9 @@ class Child:
                                     else:
                                         dad_rd_final.append(child_rd_second)
                                         mom_rd_final.append(child_rd_first)
+        self.pos_arr = pos_final
+        self.mom_rd_array = np.array(mom_rd_final)
+        self.dad_rd_array = np.array(dad_rd_final)
         return pos_final, np.array(mom_rd_final), np.array(dad_rd_final)
 
     def t_test_snps(self, samp_size=10000, t_thres=25):

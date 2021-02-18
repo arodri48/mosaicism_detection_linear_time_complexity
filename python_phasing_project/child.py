@@ -7,7 +7,7 @@ from statistics import mean, pvariance
 
 class Child:
 
-    def __init__(self, child_name, father_name, mother_name, SNP_df):
+    def __init__(self, child_name, father_name, mother_name):
         self.name = child_name
         self.father_name = father_name
         self.mother_name = mother_name
@@ -24,7 +24,6 @@ class Child:
         self.naive_t_values = []
         self.forward_filter_results = []
         self.backward_filter_results = []
-        self.SNP_df = SNP_df
 
     def phasable_snp_determiner(self, chr_df):
         # first make temporary helper variables
@@ -108,7 +107,6 @@ class Child:
         self.pos_arr = pos_final
         self.mom_rd_array = np.array(mom_rd_final)
         self.dad_rd_array = np.array(dad_rd_final)
-        return pos_final, np.array(mom_rd_final), np.array(dad_rd_final)
 
     def t_test_snps(self, samp_size=10000, t_thres=25):
 

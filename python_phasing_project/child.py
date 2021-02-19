@@ -3,7 +3,7 @@ import sandia_stats
 from scipy.stats import t
 from collections import Counter
 from statistics import mean, pvariance
-
+from math import floor
 
 class Child:
 
@@ -159,19 +159,27 @@ class Child:
                 t_vals.append(abs(local_arr.mean() / (local_arr.var() / samp_size) ** 0.5))
             self.naive_t_values = t_vals
 
-    def edge_detection(self, filter_width=100, radius=1000, tolerance=0.1, sample_size = 100):
-       
+    def edge_detection(self, sample_size = 10000):
+        estimated_interval_length = self.index_diff_arr_end_of_mosaicism - self.index_diff_arr_start_of_mosaicism + 1
+        width_of_average = floor(estimated_interval_length/2)
+        fourth_up = floor(estimated_interval_length/4)
+        diff_arr = self.dad_rd_array - self.mom_rd_array
+        height = diff_arr[self.index_diff_arr_start_of_mosaicism + fourth_up:self.index_diff_arr_start_of_mosaicism + fourth_up + width_of_average].mean()
+        filter_width_one_side = floor(0.25 * sample_size)
+        forward_filter = np.zeros(2*filter_width_one_side)
+        forward_filter[filter_width_one_side:] = height
+        backward_filter = np.zeros(2*filter_width_one_side)
+        forward_filter[:filter_width_one_side] = height
 
-
-
-
-
-
-
-
-
-
-
+        if self.index_diff_arr_start_of_mosaicism == 0 and self.index_diff_arr_end_of_mosaicism == len(self.pos_arr) - 1:
+            return [self.pos_arr[0], self.pos_arr[-1]]
+        elif self.index_diff_arr_start_of_mosaicism == 0 and self.index_diff_arr_end_of_mosaicism != len(self.pos_arr) - 1:
+            center_index = self.index_diff_arr_end_of_mosaicism - floor(0.5 * sample_size)
+            filter_difference = [abs((diff_arr[center_index - filter_width_one_side + i: center_index + filter_width_one_side + i] - backward_filter).sum(dtype=float)) for i in range(sample_size)]
+            min_val = min(filter_difference)
+            return [self.pos_arr[0], self.pos_arr[center_index + filter_difference.index(min_val)]]
+        elif self.index_diff_arr_start_of_mosaicism != 0 and self.index_diff_arr_end_of_mosaicism == len(self.pos_arr) - 1:
+        else:
 
 
         # TODO: rewrite edge detector with better methodology from t-test above

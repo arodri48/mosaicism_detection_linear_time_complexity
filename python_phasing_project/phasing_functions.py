@@ -1,5 +1,9 @@
 from collections import Counter
 import numpy as np
+import sandia_stats
+import helper_functions
+from math import floor
+
 
 def sandia_t_test_snps(vcf_pos, maternal_rd, paternal_rd, samp_size=10000, t_thres=25):
     mom_minus_samp_size = maternal_rd.size - samp_size
@@ -14,25 +18,32 @@ def sandia_t_test_snps(vcf_pos, maternal_rd, paternal_rd, samp_size=10000, t_thr
         # Step 3: Calculate initial moments
         moments = sandia_stats.m1_m2_moment_generator(diff_arr[0:samp_size])
         # Step 4: Calculate t-statistic for first window
-        t_values.append(abs(moments[0] / (moments[1]**0.5/samp_size)))
+        t_values.append(abs(moments[0] / (moments[1] ** 0.5 / samp_size)))
         # Step 5: Calculate t-values for rest of positions
         counter2 = samp_size
         mom_update_func = sandia_stats.m1_m2_moment_updater
         for i in range(mom_minus_samp_size):
             moments = mom_update_func(moments, diff_arr[i], diff_arr[counter2], samp_size)
             counter2 += 1
-            t_values.append(abs(moments[0] / (moments[1]**0.5/samp_size)))
+            t_values.append(abs(moments[0] / (moments[1] ** 0.5 / samp_size)))
         # Step 6: See if any t-values exceed the t-value threshold
         index_of_mosaicism = next((i for i, elem in enumerate(t_values) if elem > t_thres), -1)
         if index_of_mosaicism != -1:
             # there is a t_value that exceeds the thresold, save the vcf position of the start
-            vcf_pos_start_of_mosaicism = vcf_pos[index_of_mosaicism + samp_size -1] if index_of_mosaicism != 0 else vcf_pos[0]
+            vcf_pos_start_of_mosaicism = vcf_pos[index_of_mosaicism + samp_size - 1] if index_of_mosaicism != 0 else \
+                vcf_pos[0]
             # figure out the end point of mosaicism
-            index_of_end_of_mosaicism = next((i+index_of_mosaicism+1 for i, elem in enumerate(t_values[index_of_mosaicism + 1:]) if elem < t_thres),len(t_values) - 1)
-            vcf_pos_end_of_mosaicism = vcf_pos[index_of_end_of_mosaicism + samp_size - 1] if index_of_end_of_mosaicism != len(t_values) - 1 else vcf_pos[-1]
+            index_of_end_of_mosaicism = next(
+                (i + index_of_mosaicism + 1 for i, elem in enumerate(t_values[index_of_mosaicism + 1:]) if
+                 elem < t_thres), len(t_values) - 1)
+            vcf_pos_end_of_mosaicism = vcf_pos[
+                index_of_end_of_mosaicism + samp_size - 1] if index_of_end_of_mosaicism != len(t_values) - 1 else \
+                vcf_pos[-1]
             return [vcf_pos_start_of_mosaicism, vcf_pos_end_of_mosaicism]
         else:
             return None
+
+
 def phasable_snp_determiner(chr_df, proband_name, father_name, mother_name):
     # first make temporary helper variables
     pos_final = []
@@ -114,11 +125,64 @@ def phasable_snp_determiner(chr_df, proband_name, father_name, mother_name):
                                     mom_rd_final.append(child_rd_first)
     return pos_final, np.array(mom_rd_final), np.array(dad_rd_final)
 
-    
+
+def edge_detection(sample_size, estimated_start_index, estimated_end_index, paternal_rd_array, maternal_rd_array):
+    estimated_interval_length = estimated_end_index - estimated_start_index
+    width_of_average = floor(estimated_interval_length / 2)
+    fourth_up = floor(estimated_interval_length / 4)
+    diff_arr = paternal_rd_array - maternal_rd_array
+    height = diff_arr[estimated_start_index + fourth_up:estimated_start_index + fourth_up + width_of_average].mean()
+    filter_width_one_side = floor(0.25 * sample_size)
+    forward_filter = np.zeros(2 * filter_width_one_side)
+    forward_filter[filter_width_one_side:] = height
+    backward_filter = np.zeros(2 * filter_width_one_side)
+    backward_filter[:filter_width_one_side] = height
+
+    final_index = paternal_rd_array.size - 1
+
+    if estimated_start_index == 0 and estimated_end_index == final_index:
+        # estimated chromosome is mosaic
+        return [0, final_index]
+    elif estimated_start_index == 0 and estimated_end_index != final_index:
+        center_index = estimated_end_index - floor(0.5 * sample_size)
+        filter_difference = [abs((diff_arr[
+                                  center_index - filter_width_one_side + i: center_index + filter_width_one_side + i] - backward_filter).sum(
+            dtype=float)) for i in range(sample_size)]
+        min_val = min(filter_difference)
+        return [0, center_index + filter_difference.index(min_val)]
+    elif estimated_start_index != 0 and estimated_end_index == final_index:
+        center_index = estimated_start_index - floor(0.5 * sample_size)
+        filter_difference = [abs((diff_arr[
+                                  center_index - filter_width_one_side + i: center_index + filter_width_one_side + i] - forward_filter).sum(
+            dtype=float)) for i in range(sample_size)]
+        min_val = min(filter_difference)
+        return [center_index + filter_difference.index(min_val), final_index]
+    else:
+        center_start_index = estimated_start_index - floor(0.5 * sample_size)
+        filter_start_difference = [abs((diff_arr[
+                                        center_start_index - filter_width_one_side + i: center_start_index + filter_width_one_side + i] - forward_filter).sum(
+            dtype=float)) for i in range(sample_size)]
+        min_start_val = min(filter_start_difference)
+
+        center_end_index = estimated_end_index - floor(0.5 * sample_size)
+        filter_end_difference = [abs((diff_arr[
+                                      center_end_index - filter_width_one_side + i: center_end_index + filter_width_one_side + i] - backward_filter).sum(
+            dtype=float)) for i in range(sample_size)]
+        min_end_val = min(filter_end_difference)
+        return [center_start_index + filter_start_difference.index(min_start_val),
+                center_end_index + filter_end_difference.index(min_end_val)]
+
+
 def runner(child, chr_name, sample_size, t_threshold, SNP_df):
     # step 1: filter the SNP df by chromosome name
     chr_snp_df = helper_functions.chromosome_filter(SNP_df, chr_name)
     # step 2: do phasing and return results
-    vcf_pos, maternal_rd, paternal_rd = phasable_snp_determiner(chr_snp_df, child.name, child.father_name, child.mother_name)
-    results = sandia_t_test_snps(vcf_pos, maternal_rd, paternal_rd, samp_size=sample_size, t_thres=t_threshold)
-    return results
+    vcf_pos, maternal_rd, paternal_rd = phasable_snp_determiner(chr_snp_df, child.name, child.father_name,
+                                                                child.mother_name)
+    mosaicism_initial_survey_results = sandia_t_test_snps(vcf_pos, maternal_rd, paternal_rd, samp_size=sample_size, t_thres=t_threshold)
+    # TODO: change output of sandia t test snps to make sure program works properly (have it return approximate indices instead of vcf_pos)
+    # TODO: then have edge detection return the VCF pos
+    if mosaicism_initial_survey_results is not None:
+        return edge_detection(sample_size, mosaicism_initial_survey_results[0], mosaicism_initial_survey_results[1], paternal_rd, maternal_rd)
+    else:
+        return None

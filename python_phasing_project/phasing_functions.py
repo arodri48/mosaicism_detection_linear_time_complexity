@@ -55,7 +55,6 @@ def phasable_snp_determiner(chr_df, proband_name, father_name, mother_name):
         child_info = row[proband_name].split(':', 3)
         if child_info[0] in het_set:
             child_read_depths = child_info[1].split(',')
-            # print(child_read_depths)
             child_rd_first = int(child_read_depths[0])
             child_rd_second = int(child_read_depths[1])
             if (4 < child_rd_first < 75) and (4 < child_rd_second < 75):
@@ -176,6 +175,7 @@ def edge_detection(sample_size, estimated_start_index, estimated_end_index, pate
                                       center_end_index - filter_width_one_side + i: center_end_index + filter_width_one_side + i] - backward_filter).sum(
             dtype=float)) for i in range(sample_size)]
         min_end_val = min(filter_end_difference)
+
         return [center_start_index + filter_start_difference.index(min_start_val),
                 center_end_index + filter_end_difference.index(min_end_val)]
 
@@ -189,7 +189,4 @@ def runner(child, chr_name, sample_size, t_threshold, SNP_df):
     mosaicism_initial_survey_results = sandia_t_test_snps(vcf_pos, maternal_rd, paternal_rd, samp_size=sample_size, t_thres=t_threshold)
     # TODO: change output of sandia t test snps to make sure program works properly (have it return approximate indices instead of vcf_pos)
     # TODO: then have edge detection return the VCF pos
-    if mosaicism_initial_survey_results is not None:
-        return edge_detection(sample_size, mosaicism_initial_survey_results[0], mosaicism_initial_survey_results[1], paternal_rd, maternal_rd)
-    else:
-        return None
+    return edge_detection(sample_size, mosaicism_initial_survey_results[0], mosaicism_initial_survey_results[1], paternal_rd, maternal_rd) if mosaicism_initial_survey_results is not None else None

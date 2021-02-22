@@ -4,7 +4,7 @@ import pandas as pd
 
 def read_VCF(vcf_path, name_list):
     with open(vcf_path, 'r') as f:
-        lines = [l for l in f if not l.startswith('##')]
+        lines = [line for line in f if not line.startswith('##')]
     df = pd.read_csv(io.StringIO(''.join(lines)), sep='\t')
     df = df[~df['REF'].str.contains(",")]
     df = df[~df['ALT'].str.contains(",")]
@@ -18,18 +18,18 @@ def read_VCF(vcf_path, name_list):
 
 
 def filter_VCF_by_chr_and_SNP(df, chr_number):
-    filtered_df = df[(df["#CHROM"] == chr_number) & (df['REF'].str.len() == 1) & (df['ALT'].str.len() == 1) & (
+    return df[(df["#CHROM"] == chr_number) & (df['REF'].str.len() == 1) & (df['ALT'].str.len() == 1) & (
             df['QUAL'] > 100)].reset_index(drop=True)
-    return filtered_df
+
 
 def SNP_filter(df):
-    filtered_df = df[(df['REF'].str.len() == 1) & (df['ALT'].str.len() == 1) & (
+    return df[(df['REF'].str.len() == 1) & (df['ALT'].str.len() == 1) & (
             df['QUAL'] > 100)].reset_index(drop=True)
-    return filtered_df
+
 
 def chromosome_filter(df, chr_name):
-    filtered_df = df[(df["#CHROM"] == chr_name)].reset_index(drop=True)
-    return filtered_df
+    return df[(df["#CHROM"] == chr_name)].reset_index(drop=True)
+
 
 def ped_file_reader(ped_file_path):
     with open(ped_file_path, 'r') as f:

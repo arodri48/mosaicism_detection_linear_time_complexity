@@ -1,6 +1,3 @@
-import numpy as np
-
-
 def statistical_moment_generator(data_arr):
     # Generates first, second, third, and fourth moments for a data array
     n = 0.0

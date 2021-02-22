@@ -65,7 +65,7 @@ def phasable_snp_determiner(chr_df, proband_name, father_name, mother_name):
                 dad_line_info = row[father_name].split(':', 2)
                 mom_geno_count = Counter(mom_line_info[0])
                 dad_geno_count = Counter(dad_line_info[0])
-                if 0 == dad_geno_count['.'] == mom_geno_count['.']:
+                if not (dad_geno_count['.'] or mom_geno_count['.']):
                     is_mom_hom_ref = 2 == mom_geno_count['0']
                     is_dad_hom_ref = 2 == dad_geno_count['0']
                     is_mom_hom_var = 2 == mom_geno_count['1']
@@ -145,18 +145,19 @@ def edge_detection(sample_size, estimated_start_index, estimated_end_index, pate
     backward_filter[:filter_width_one_side] = height
 
     final_index = paternal_rd_array.size - 1
+    is_mosaicism_to_the_end = estimated_end_index == final_index
 
-    if estimated_start_index == 0 and estimated_end_index == final_index:
+    if not estimated_start_index and is_mosaicism_to_the_end:
         # estimated chromosome is mosaic
         return [0, final_index]
-    elif estimated_start_index == 0 and estimated_end_index != final_index:
+    elif not (estimated_start_index or is_mosaicism_to_the_end):
         center_index = estimated_end_index - floor(0.5 * sample_size)
         filter_difference = [abs((diff_arr[
                                   center_index - filter_width_one_side + i: center_index + filter_width_one_side + i] - backward_filter).sum(
             dtype=float)) for i in range(sample_size)]
         min_val = min(filter_difference)
         return [0, center_index + filter_difference.index(min_val)]
-    elif estimated_start_index != 0 and estimated_end_index == final_index:
+    elif estimated_start_index and is_mosaicism_to_the_end:
         center_index = estimated_start_index - floor(0.5 * sample_size)
         filter_difference = [abs((diff_arr[
                                   center_index - filter_width_one_side + i: center_index + filter_width_one_side + i] - forward_filter).sum(

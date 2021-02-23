@@ -2,5 +2,5 @@ PED_FILE	C:\Users\rodriguezah\Desktop\mosaicism_phasing\UDP18111.ped
 VCF_FILE	C:\Users\rodriguezah\Desktop\mosaicism_phasing\cohort_joint_genotyped_UDP18111.vcf
 SAMPLE_SIZE	10000
 T_THRES	35
-OUTPUT_FILE	C:\Users\rodriguezah\Desktop\mosaicism_phasing\UDP18111_results_threshold_35_sample_size_10000.txt
+OUTPUT_FILE	C:\Users\rodriguezah\Desktop\mosaicism_phasing\UDP18111_results_threshold_35_sample_size_10000_step_function_edge_detection.txt
 PROBAND_NAME	UDP18111

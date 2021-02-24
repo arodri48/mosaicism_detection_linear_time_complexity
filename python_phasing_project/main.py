@@ -1,5 +1,6 @@
 import helper_functions
 import phasing_functions
+import time
 
 
 def main(config_file_path):
@@ -19,11 +20,13 @@ def main(config_file_path):
     SNP_df = helper_functions.SNP_filter(df)
 
     # Step 4: Generate results
+    start = time.time()
     mosaicism_outcome = [phasing_functions.runner(config_elem["PROBAND_NAME"], names[0], names[1], chr_name,
                                                   int(config_elem["SAMPLE_SIZE"]), float(config_elem["T_THRES"]),
                                                   SNP_df, float(config_elem["EDGE_DETECTION_WIDTH"])) for chr_name in
                          range(1, 23)]
-
+    end = time.time()
+    print(" ".join(["It took", str((end - start) / 60), "minutes"]))
     # Step 5: Write results to file
     with open(config_elem["OUTPUT_FILE"], 'w') as output_file:
         output_file.write(" ".join(["Mosaicism results for", config_elem["PROBAND_NAME"]]))

@@ -47,30 +47,26 @@ def phasable_snp_determiner(chr_df, proband_name, father_name, mother_name):
     dad_rd_final = []
     mom_rd_final = []
     het_set = {"0/1", "1/0", "1|0", "0|1"}
-    # iterate through every row
+
     for index, row in chr_df.iterrows():
         child_info = row[proband_name].split(':', 3)
         if child_info[0] in het_set:
-            child_read_depths = child_info[1].split(',')
-            child_rd_first = int(child_read_depths[0])
-            child_rd_second = int(child_read_depths[1])
-            if (4 < child_rd_first < 75) and (4 < child_rd_second < 75):
-                # proband is a het; need to check the parents and check at least one is homozygous and if they are
-                # both homozygous, not for same allele
-                mom_line_info = row[mother_name].split(':', 2)
-                dad_line_info = row[father_name].split(':', 2)
-                mom_geno_count = Counter(mom_line_info[0])
-                dad_geno_count = Counter(dad_line_info[0])
-                if not (dad_geno_count['.'] or mom_geno_count['.']):
-                    is_mom_hom_ref = 2 == mom_geno_count['0']
-                    is_dad_hom_ref = 2 == dad_geno_count['0']
-                    is_mom_hom_var = 2 == mom_geno_count['1']
-                    is_dad_hom_var = 2 == dad_geno_count['1']
-                    is_dad_het = 3 == len(dad_geno_count)
-                    is_mom_het = 3 == len(mom_geno_count)
-                    if not ((is_dad_het and is_mom_het) or
-                            (is_mom_hom_ref and is_dad_hom_ref) or (
-                                    is_mom_hom_var and is_dad_hom_var)):
+            mom_line_info = row[mother_name].split(':', 2)
+            dad_line_info = row[father_name].split(':', 2)
+            mom_geno_count = Counter(mom_line_info[0])
+            dad_geno_count = Counter(dad_line_info[0])
+            if not (dad_geno_count['.'] or mom_geno_count['.']):
+                is_mom_hom_ref = 2 == mom_geno_count['0']
+                is_dad_hom_ref = 2 == dad_geno_count['0']
+                is_mom_hom_var = 2 == mom_geno_count['1']
+                is_dad_hom_var = 2 == dad_geno_count['1']
+                is_dad_het = 3 == len(dad_geno_count)
+                is_mom_het = 3 == len(mom_geno_count)
+                if not ((is_dad_het and is_mom_het) or (is_mom_hom_ref and is_dad_hom_ref) or (is_mom_hom_var and is_dad_hom_var)):
+                    child_read_depths = child_info[1].split(',')
+                    child_rd_first = int(child_read_depths[0])
+                    child_rd_second = int(child_read_depths[1])
+                    if (4 < child_rd_first < 75) and (4 < child_rd_second < 75):
                         # save the position number and then the read depth for the child
                         pos_final.append(row['POS'])
                         # case 1: Dad is a het

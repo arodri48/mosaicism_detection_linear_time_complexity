@@ -49,36 +49,72 @@ def phasable_snp_determiner(chr_df, proband_name, father_name, mother_name):
     het_set = {"0/1", "1/0", "1|0", "0|1"}
 
     for index, row in chr_df.iterrows():
-        child_info = row[proband_name].split(':', 3)
+        child_info = row[proband_name].split(':', 2)
         if child_info[0] in het_set:
-            mom_line_info = row[mother_name].split(':', 2)
-            dad_line_info = row[father_name].split(':', 2)
+            mom_line_info = row[mother_name].split(':', 1)
+            dad_line_info = row[father_name].split(':', 1)
             mom_geno_count = Counter(mom_line_info[0])
             dad_geno_count = Counter(dad_line_info[0])
-            if not (dad_geno_count['.'] or mom_geno_count['.']):
-                is_mom_hom_ref = 2 == mom_geno_count['0']
-                is_dad_hom_ref = 2 == dad_geno_count['0']
-                is_mom_hom_var = 2 == mom_geno_count['1']
-                is_dad_hom_var = 2 == dad_geno_count['1']
-                is_dad_het = 3 == len(dad_geno_count)
-                is_mom_het = 3 == len(mom_geno_count)
-                if not ((is_dad_het and is_mom_het) or (is_mom_hom_ref and is_dad_hom_ref) or (is_mom_hom_var and is_dad_hom_var)):
-                    child_read_depths = child_info[1].split(',')
-                    child_rd_first = int(child_read_depths[0])
-                    child_rd_second = int(child_read_depths[1])
-                    if (4 < child_rd_first < 75) and (4 < child_rd_second < 75):
-                        # save the position number and then the read depth for the child
-                        pos_final.append(row['POS'])
-                        # case 1: Dad is a het
-                        if is_dad_het:
-                            if is_mom_hom_ref:
-                                if child_info[0][0] == '0':
-                                    dad_rd_final.append(child_rd_second)
-                                    mom_rd_final.append(child_rd_first)
+            # quickly check if both parents are het, if so, not phasable
+            is_dad_het = 3 == len(dad_geno_count)
+            is_mom_het = 3 == len(mom_geno_count)
+            if not (is_dad_het and is_mom_het):
+                if not (dad_geno_count['.'] or mom_geno_count['.']):
+                    is_mom_hom_ref = 2 == mom_geno_count['0']
+                    is_dad_hom_ref = 2 == dad_geno_count['0']
+                    is_mom_hom_var = 2 == mom_geno_count['1']
+                    is_dad_hom_var = 2 == dad_geno_count['1']
+                    if not ((is_mom_hom_ref and is_dad_hom_ref) or (is_mom_hom_var and is_dad_hom_var)):
+                        child_read_depths = child_info[1].split(',', 2)
+                        child_rd_first = int(child_read_depths[0])
+                        child_rd_second = int(child_read_depths[1])
+                        if (4 < child_rd_first < 75) and (4 < child_rd_second < 75):
+                            # save the position number and then the read depth for the child
+                            pos_final.append(row['POS'])
+                            # case 1: Dad is a het
+                            if is_dad_het:
+                                if is_mom_hom_ref:
+                                    if child_info[0][0] == '0':
+                                        dad_rd_final.append(child_rd_second)
+                                        mom_rd_final.append(child_rd_first)
+                                    else:
+                                        dad_rd_final.append(child_rd_first)
+                                        mom_rd_final.append(child_rd_second)
+                                # if mom is hom var
                                 else:
+                                    if child_info[0][0] == '1':
+                                        dad_rd_final.append(child_rd_second)
+                                        mom_rd_final.append(child_rd_first)
+                                    else:
+                                        dad_rd_final.append(child_rd_first)
+                                        mom_rd_final.append(child_rd_second)
+                            # case 2: Mom is a het
+                            elif is_mom_het:
+                                # if dad is hom ref
+                                if is_dad_hom_ref:
+                                    if child_info[0][0] == '0':
+                                        dad_rd_final.append(child_rd_first)
+                                        mom_rd_final.append(child_rd_second)
+                                    else:
+                                        dad_rd_final.append(child_rd_second)
+                                        mom_rd_final.append(child_rd_first)
+                                # if dad is hom var
+                                else:
+                                    if child_info[0][0] == '1':
+                                        dad_rd_final.append(child_rd_first)
+                                        mom_rd_final.append(child_rd_second)
+                                    else:
+                                        dad_rd_final.append(child_rd_second)
+                                        mom_rd_final.append(child_rd_first)
+                            # case 3: dad is hom var and mom is hom ref
+                            elif is_dad_hom_var and is_mom_hom_ref:
+                                if child_info[0][0] == '1':
                                     dad_rd_final.append(child_rd_first)
                                     mom_rd_final.append(child_rd_second)
-                            # if mom is hom var
+                                else:
+                                    dad_rd_final.append(child_rd_second)
+                                    mom_rd_final.append(child_rd_first)
+                            # case 4: mom is hom var and dad is hom ref
                             else:
                                 if child_info[0][0] == '1':
                                     dad_rd_final.append(child_rd_second)
@@ -86,40 +122,6 @@ def phasable_snp_determiner(chr_df, proband_name, father_name, mother_name):
                                 else:
                                     dad_rd_final.append(child_rd_first)
                                     mom_rd_final.append(child_rd_second)
-                        # case 2: Mom is a het
-                        elif is_mom_het:
-                            # if dad is hom ref
-                            if is_dad_hom_ref:
-                                if child_info[0][0] == '0':
-                                    dad_rd_final.append(child_rd_first)
-                                    mom_rd_final.append(child_rd_second)
-                                else:
-                                    dad_rd_final.append(child_rd_second)
-                                    mom_rd_final.append(child_rd_first)
-                            # if dad is hom var
-                            else:
-                                if child_info[0][0] == '1':
-                                    dad_rd_final.append(child_rd_first)
-                                    mom_rd_final.append(child_rd_second)
-                                else:
-                                    dad_rd_final.append(child_rd_second)
-                                    mom_rd_final.append(child_rd_first)
-                        # case 3: dad is hom var and mom is hom ref
-                        elif is_dad_hom_var and is_mom_hom_ref:
-                            if child_info[0][0] == '1':
-                                dad_rd_final.append(child_rd_first)
-                                mom_rd_final.append(child_rd_second)
-                            else:
-                                dad_rd_final.append(child_rd_second)
-                                mom_rd_final.append(child_rd_first)
-                        # case 4: mom is hom var and dad is hom ref
-                        else:
-                            if child_info[0][0] == '1':
-                                dad_rd_final.append(child_rd_second)
-                                mom_rd_final.append(child_rd_first)
-                            else:
-                                dad_rd_final.append(child_rd_first)
-                                mom_rd_final.append(child_rd_second)
 
     return pos_final, np.array(mom_rd_final), np.array(dad_rd_final)
 

@@ -1,7 +1,6 @@
 from collections import Counter
 import numpy as np
 import sandia_stats
-import helper_functions
 from math import floor
 
 
@@ -182,15 +181,44 @@ def edge_detection(sample_size, estimated_start_index, estimated_end_index, pate
                 center_end_index + filter_end_difference.index(min_end_val), height]
 
 
-def runner(child_name, father_name, mother_name, chr_name, sample_size, t_threshold, SNP_df, edge_detection_width):
-    # step 1: filter the SNP df by chromosome name
-    chr_snp_df = helper_functions.chromosome_filter(SNP_df, chr_name)
-    # step 2: do phasing
+def runner(child_name, father_name, mother_name, sample_size, t_threshold, chr_snp_df, edge_detection_width):
+    # step 1: do phasing
     vcf_pos, maternal_rd, paternal_rd = phasable_snp_determiner(chr_snp_df, child_name, father_name, mother_name)
-    # step 3: determine if mosaicism is present
+    # step 2: determine if mosaicism is present
     mosaicism_initial_survey_results = sandia_t_test_snps(maternal_rd, paternal_rd, samp_size=sample_size,
                                                           t_thres=t_threshold)
-    # step 4: if it is, accurately determine edges
+    # step 3: if it is, accurately determine edges
     return edge_detection(sample_size, mosaicism_initial_survey_results[0], mosaicism_initial_survey_results[1],
                           paternal_rd, maternal_rd, vcf_pos,
                           edge_detection_width) if mosaicism_initial_survey_results is not None else None
+
+
+def t_test_runner(child_name, father_name, mother_name, sample_size, chr_snp_df):
+    # step 1: do phasing
+    vcf_pos, maternal_rd, paternal_rd = phasable_snp_determiner(chr_snp_df, child_name, father_name, mother_name)
+    t_test_vals = no_classifier_t_test(maternal_rd, paternal_rd, samp_size=sample_size)
+    return t_test_vals
+
+
+def no_classifier_t_test(maternal_rd, paternal_rd, samp_size=10000):
+    mom_minus_samp_size = maternal_rd.size - samp_size
+    # Check if sample size is greater read depth total
+    if 0 > mom_minus_samp_size:
+        return None
+    else:
+        # Step 1: Allocate an array that will store the t
+        t_values = []
+        # Step 2: Generate difference array between mom and dad
+        diff_arr = (maternal_rd - paternal_rd).tolist()
+        # Step 3: Calculate initial moments
+        moments = sandia_stats.m1_m2_moment_generator(diff_arr[0:samp_size])
+        # Step 4: Calculate t-statistic for first window
+        t_values.append(abs(moments[0] / (moments[1] ** 0.5 / samp_size)))
+        # Step 5: Calculate t-values for rest of positions
+        counter2 = samp_size
+        mom_update_func = sandia_stats.m1_m2_moment_updater
+        for i in range(mom_minus_samp_size):
+            moments = mom_update_func(moments, diff_arr[i], diff_arr[counter2], samp_size)
+            counter2 += 1
+            t_values.append(abs(moments[0] / (moments[1] ** 0.5 / samp_size)))
+        return t_values

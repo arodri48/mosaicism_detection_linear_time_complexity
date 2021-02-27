@@ -24,7 +24,7 @@ def filter_VCF_by_chr_and_SNP(df, chr_number):
 
 def SNP_filter(df):
     return df[(df['REF'].str.len() == 1) & (df['ALT'].str.len() == 1) & (
-            df['QUAL'] > 100)].reset_index(drop=True)
+            df['QUAL'] > 100)]
 
 
 def chromosome_filter(df, chr_name):

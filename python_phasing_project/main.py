@@ -16,17 +16,18 @@ def main(config_file_path):
     # Step 2: Read in the vcf file
     df = helper_functions.read_VCF(config_elem["VCF_FILE"], names)
 
-    # Step 3: obtain only SNPs
+    # Step 3: obtain only SNPs and then group by chromosome name
     SNP_df = helper_functions.SNP_filter(df)
+    snp_chr_dict = dict(tuple(SNP_df.groupby(["#CHROM"])))
 
     # Step 4: Generate results
-    start = time.time()
-    mosaicism_outcome = [phasing_functions.runner(config_elem["PROBAND_NAME"], names[0], names[1], chr_name,
+    #start = time.time()
+    mosaicism_outcome = [phasing_functions.runner(config_elem["PROBAND_NAME"], names[0], names[1],
                                                   int(config_elem["SAMPLE_SIZE"]), float(config_elem["T_THRES"]),
-                                                  SNP_df, float(config_elem["EDGE_DETECTION_WIDTH"])) for chr_name in
+                                                  snp_chr_dict[chr_name], float(config_elem["EDGE_DETECTION_WIDTH"])) for chr_name in
                          range(1, 23)]
-    end = time.time()
-    print(" ".join(["It took", str((end - start) / 60), "minutes"]))
+    #end = time.time()
+    # print(" ".join(["It took", str((end - start) / 60), "minutes"]))
     # Step 5: Write results to file
     with open(config_elem["OUTPUT_FILE"], 'w') as output_file:
         output_file.write(" ".join(["Mosaicism results for", config_elem["PROBAND_NAME"]]))

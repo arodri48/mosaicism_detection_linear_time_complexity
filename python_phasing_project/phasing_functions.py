@@ -47,11 +47,11 @@ def phasable_snp_determiner(chr_df, proband_name, father_name, mother_name):
     mom_rd_final = []
     het_set = {"0/1", "1/0", "1|0", "0|1"}
 
-    for index, row in chr_df.iterrows():
-        child_info = row[proband_name].split(':', 2)
+    for row in chr_df.itertuples():
+        child_info = getattr(row, proband_name).split(':', 2)
         if child_info[0] in het_set:
-            mom_line_info = row[mother_name].split(':', 1)
-            dad_line_info = row[father_name].split(':', 1)
+            mom_line_info = getattr(row, mother_name).split(':', 1)
+            dad_line_info = getattr(row, father_name).split(':', 1)
             mom_geno_count = Counter(mom_line_info[0])
             dad_geno_count = Counter(dad_line_info[0])
             # quickly check if both parents are het, if so, not phasable
@@ -69,7 +69,7 @@ def phasable_snp_determiner(chr_df, proband_name, father_name, mother_name):
                         child_rd_second = int(child_read_depths[1])
                         if (4 < child_rd_first < 75) and (4 < child_rd_second < 75):
                             # save the position number and then the read depth for the child
-                            pos_final.append(row['POS'])
+                            pos_final.append(getattr(row, 'POS'))
                             # case 1: Dad is a het
                             if is_dad_het:
                                 if is_mom_hom_ref:

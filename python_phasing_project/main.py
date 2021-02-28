@@ -27,7 +27,7 @@ def main(config_file_path):
                                                   snp_chr_dict[chr_name], float(config_elem["EDGE_DETECTION_WIDTH"])) for chr_name in
                          range(1, 23)]
     #end = time.time()
-    # print(" ".join(["It took", str((end - start) / 60), "minutes"]))
+    #print(" ".join(["It took", str((end - start) / 60), "minutes"]))
     # Step 5: Write results to file
     with open(config_elem["OUTPUT_FILE"], 'w') as output_file:
         output_file.write(" ".join(["Mosaicism results for", config_elem["PROBAND_NAME"]]))

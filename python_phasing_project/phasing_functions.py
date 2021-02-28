@@ -47,7 +47,7 @@ def phasable_snp_determiner(chr_df, proband_name, father_name, mother_name):
     mom_rd_final = []
     het_set = {"0/1", "1/0", "1|0", "0|1"}
 
-    for row in chr_df.itertuples():
+    for row in chr_df.itertuples(index=False):
         child_info = getattr(row, proband_name).split(':', 2)
         if child_info[0] in het_set:
             mom_line_info = getattr(row, mother_name).split(':', 1)

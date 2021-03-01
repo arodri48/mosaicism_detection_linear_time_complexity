@@ -32,12 +32,17 @@ def main(config_file_path):
     with open(config_elem["OUTPUT_FILE"], 'w') as output_file:
         output_file.write(" ".join(["Mosaicism results for", config_elem["PROBAND_NAME"]]))
         output_file.write("\n")
-        output_file.write("\t".join(["chr_number", "VCF_start", "VCF_end"]))
+        output_file.write("\t".join(["chr_number", "VCF_start", "VCF_end", "Y-Shaped_Mosaicism_present", "Slope", "Start_of_Y-Shaped_Mosaicism"]))
         output_file.write("\n")
         for i, elem in enumerate(mosaicism_outcome):
             if elem is not None:
-                output_file.write("\t".join([str(i + 1), str(elem[0]), str(elem[1])]))
+                if elem[5] == 0:
+                    output_file.write("\t".join([str(i + 1), str(elem[0]), str(elem[1]), str(elem[5]), "N/A", "N/A"]))
+                else:
+                    # y shaped mosaicism is present
+                    output_file.write("\t".join([str(i + 1), str(elem[0]), str(elem[1]), str(elem[5]), str(elem[6]), str(elem[7])]))
                 output_file.write("\n")
+
 
 
 main('phasing_config_file.txt')

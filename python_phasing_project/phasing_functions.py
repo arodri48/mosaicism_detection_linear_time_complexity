@@ -2,6 +2,7 @@ from collections import Counter
 import numpy as np
 import sandia_stats
 from math import floor
+from scipy import stats
 
 
 def sandia_t_test_snps(maternal_rd, paternal_rd, samp_size=10000, t_thres=25):
@@ -188,9 +189,33 @@ def runner(child_name, father_name, mother_name, sample_size, t_threshold, chr_s
     mosaicism_initial_survey_results = sandia_t_test_snps(maternal_rd, paternal_rd, samp_size=sample_size,
                                                           t_thres=t_threshold)
     # step 3: if it is, accurately determine edges
-    return edge_detection(sample_size, mosaicism_initial_survey_results[0], mosaicism_initial_survey_results[1],
-                          paternal_rd, maternal_rd, vcf_pos,
-                          edge_detection_width) if mosaicism_initial_survey_results is not None else None
+    if mosaicism_initial_survey_results is None:
+        return None
+    else:
+        edge_detection_results = edge_detection(sample_size, mosaicism_initial_survey_results[0],
+                                                mosaicism_initial_survey_results[1],
+                                                paternal_rd, maternal_rd, vcf_pos,
+                                                edge_detection_width)
+        y_mosaicism_detector_results = y_mosaicism_detector(edge_detection_results, maternal_rd, paternal_rd)
+        return edge_detection_results + y_mosaicism_detector_results
+
+
+def y_mosaicism_detector(edge_detection_results, mat_rd, pat_rd):
+    # Step 1: save the start and end indices
+    start = edge_detection_results[2]
+    end = edge_detection_results[3]
+    mosaic_range = end - start
+    # Step 2: Obtain middle 50% of read depth difference
+    diff_arr = pat_rd - mat_rd
+    mid_mosaic_region = diff_arr[start + floor(0.25 * mosaic_range): end - floor(0.25 * mosaic_range)]
+    # Step 3: Do a t-test to see if slope is non-zero
+    x_axis = np.array([i for i in range(start + floor(0.25 * mosaic_range), end - floor(0.25 * mosaic_range))])
+    res = stats.linregress(x_axis, mid_mosaic_region)
+    # Step 4: Check result
+    if abs(res.slope) < 0.01:
+        return [0]
+    else:
+        return [1, res.slope, floor(-1 * res.intercept / res.slope)]
 
 
 def t_test_runner(child_name, father_name, mother_name, sample_size, chr_snp_df):

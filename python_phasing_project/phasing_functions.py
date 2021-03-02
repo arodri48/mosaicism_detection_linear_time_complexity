@@ -197,8 +197,19 @@ def runner(child_name, father_name, mother_name, sample_size, t_threshold, chr_s
                                                 paternal_rd, maternal_rd, vcf_pos,
                                                 edge_detection_width)
         y_mosaicism_detector_results = y_mosaicism_detector(edge_detection_results, maternal_rd, paternal_rd)
-        return edge_detection_results + y_mosaicism_detector_results
+        if y_mosaicism_detector_results[0] == 1:
+            return edge_detection_results + y_mosaicism_detector_results
+        else:
+            quantification_results = mosaicism_quantifier(maternal_rd, paternal_rd, edge_detection_results[2], edge_detection_results[3])
+            return edge_detection_results + y_mosaicism_detector_results + quantification_results
 
+def mosaicism_quantifier(mat_rd, pat_rd, start_region_index, end_region_index):
+    mosaic_type = 0
+    mosaic_percentage = 0
+
+    # TODO: Insert code logic
+
+    return [mosaic_type, mosaic_percentage]
 
 def y_mosaicism_detector(edge_detection_results, mat_rd, pat_rd):
     # Step 1: save the start and end indices
@@ -247,3 +258,26 @@ def no_classifier_t_test(maternal_rd, paternal_rd, samp_size=10000):
             counter2 += 1
             t_values.append(abs(moments[0] / (moments[1] ** 0.5 / samp_size)))
         return t_values
+
+
+def mosaicism_quantifiation(mosaicism_type_number, allele_depth_ratio):
+    # type number 1: monosomy-disomy
+    # type number 2: trisomy-disomy
+    # type number 3: UPD-disomy
+    if mosaicism_type_number == 1:
+        if allele_depth_ratio < 0.5:
+            return (2 * allele_depth_ratio - 1) / (allele_depth_ratio - 1)
+        else:
+            return 2 - (1 / allele_depth_ratio)
+    elif mosaicism_type_number == 2:
+        # disomy-trisomy
+        if allele_depth_ratio < 0.5:
+            return (1 / allele_depth_ratio) - 2
+        else:
+            return (2 * allele_depth_ratio - 1) / (1 - allele_depth_ratio)
+    else:
+        # type 3
+        if allele_depth_ratio > 0.5:
+            return 2 * allele_depth_ratio - 1
+        else:
+            return 1 - 2 * allele_depth_ratio

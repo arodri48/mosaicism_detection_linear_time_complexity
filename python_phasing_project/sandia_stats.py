@@ -20,12 +20,10 @@ def statistical_moment_generator(data_arr):
 
 def m1_m2_moment_generator(data_arr):
     # initialize variables
-    n = 0.0
     mom1 = 0.0
     mom2 = 0.0
     # Calculate first and second moments
-    for x in data_arr:
-        n += 1.0
+    for n, x in enumerate(data_arr, start=1):
         delta = x - mom1
         mom1 += delta / n
         mom2 += delta * (x - mom1)

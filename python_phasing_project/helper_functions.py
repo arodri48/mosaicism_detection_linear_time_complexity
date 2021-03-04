@@ -5,13 +5,10 @@ import pandas as pd
 def read_VCF(vcf_path, name_list):
     with open(vcf_path, 'r') as f:
         lines = [line for line in f if not line.startswith('##')]
-    df = pd.read_csv(io.StringIO(''.join(lines)), sep='\t')
-    df = df[~df['REF'].str.contains(",")]
-    df = df[~df['ALT'].str.contains(",")]
-    df['REF'] = df['REF'].astype('str')
-    df['ALT'] = df['ALT'].astype('str')
+    dtype_dic = {'REF': 'str', 'ALT': 'str'}
     for elem in name_list:
-        df[elem] = df[elem].astype('str')
+        dtype_dic[elem] = 'str'
+    df = pd.read_csv(io.StringIO(''.join(lines)), sep='\t', dtype=dtype_dic)
     df['QUAL'] = pd.to_numeric(df['QUAL'], errors='coerce')
     df['POS'] = pd.to_numeric(df['POS'], errors='coerce')
     return df

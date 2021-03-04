@@ -204,25 +204,19 @@ def runner(child_name, father_name, mother_name, sample_size, t_threshold, chr_s
             return edge_detection_results + y_mosaicism_detector_results + quantification_results
 
 def mosaicism_quantifier(mat_rd, pat_rd, start_region_index, end_region_index):
-    # mosaic_type = 0
-    # mosaic_percentage = 0
-
-    # TODO: Insert code logic
-    # Step 1: Calculate diff arr
-    diff_arr = pat_rd - mat_rd
-    # Step 2: Extract mosaic region
+    # Step 1: Extract mosaic region
     mosaic_region_dad = pat_rd[start_region_index:end_region_index]
     mosaic_region_mom = mat_rd[start_region_index:end_region_index]
-    # Step 3: Calculate allele depth ratio
+    # Step 2: Calculate allele depth ratio
     dad_rd_sum = mosaic_region_dad.sum()
     mom_rd_sum = mosaic_region_mom.sum()
     mat_allele_depth_ratio = mom_rd_sum / (mom_rd_sum + dad_rd_sum)
-    # Step 4: Classify type of mosaicism
+    # Step 3: Classify type of mosaicism
     # TODO: Need to figure this out
     mosaic_type = 1
-    # Step 5: Obtain fraction of mosaicism
+    # Step 4: Obtain fraction of mosaicism
     mosaic_percentage = mosaicism_quantification(mosaic_type, mat_allele_depth_ratio)
-    # Step 6: return results
+    # Step 5: return results
     return [mosaic_type, mosaic_percentage]
 
 def y_mosaicism_detector(edge_detection_results, mat_rd, pat_rd):

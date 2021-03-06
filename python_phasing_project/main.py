@@ -26,15 +26,16 @@ def main(config_file_path):
     with open(config_elem["OUTPUT_FILE"], 'w') as output_file:
         output_file.write(" ".join(["Mosaicism results for", config_elem["PROBAND_NAME"]]))
         output_file.write("\n")
-        output_file.write("\t".join(["chr_number", "VCF_start", "VCF_end", "Y-Shaped_Mosaicism_present", "Slope", "Start_of_Y-Shaped_Mosaicism", "Type_of_Mosaicism", "Quantity"]))
+        output_file.write("\t".join(["chr_number", "VCF_start", "VCF_end", "Y-Shaped_Mosaicism_present", "Slope", "Start_of_Y-Shaped_Mosaicism", "Most_Likely_Mosaic_Model", "Fraction_Under_Mono_Disomy(1)", "Fraction_Under_Tri_Disomy(2)", "Fraction_Under_UPD_Disomy(3)"]))
         output_file.write("\n")
         for i, elem in enumerate(mosaicism_outcome, start=1):
             if elem is not None:
+                print(elem)
                 if elem[5] == 0:
-                    output_file.write("\t".join([str(i), str(elem[0]), str(elem[1]), str(elem[5]), "N/A", "N/A", str(elem[6]), str(elem[7])]))
+                    output_file.write("\t".join([str(i), str(elem[0]), str(elem[1]), str(elem[5]), "N/A", "N/A", str(elem[9]), str(elem[6]), str(elem[7]), str(elem[8])]))
                 else:
                     # y shaped mosaicism is present
-                    output_file.write("\t".join([str(i), str(elem[0]), str(elem[1]), str(elem[5]), str(elem[6]), str(elem[7]), "N/A", "N/A"]))
+                    output_file.write("\t".join([str(i), str(elem[0]), str(elem[1]), str(elem[5]), str(elem[6]), str(elem[7]), "N/A", "N/A", "N/A", "N/A"]))
                 output_file.write("\n")
 
 

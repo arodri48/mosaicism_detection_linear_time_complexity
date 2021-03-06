@@ -231,31 +231,24 @@ def mosaicism_quantifier(mat_rd, pat_rd, start_region_index, end_region_index, f
     else:
         mosaic_type = 3
     # Step 4: Obtain fraction of mosaicism
-    mosaic_percentage = mosaicism_quantification(mosaic_type, mat_allele_depth_ratio)
+    mosaic_percentage = mosaicism_quantification(mat_allele_depth_ratio)
     # Step 5: return results
-    return [mosaic_type, mosaic_percentage]
+    mosaic_percentage.append(mosaic_type)
+    return mosaic_percentage
 
-def mosaicism_quantification(mosaicism_type_number, allele_depth_ratio):
+def mosaicism_quantification(allele_depth_ratio):
     # type number 1: monosomy-disomy
     # type number 2: trisomy-disomy
     # type number 3: UPD-disomy
-    if mosaicism_type_number == 1:
-        if allele_depth_ratio < 0.5:
-            return (2 * allele_depth_ratio - 1) / (allele_depth_ratio - 1)
-        else:
-            return 2 - (1 / allele_depth_ratio)
-    elif mosaicism_type_number == 2:
-        # disomy-trisomy
-        if allele_depth_ratio < 0.5:
-            return (1 / allele_depth_ratio) - 2
-        else:
-            return (2 * allele_depth_ratio - 1) / (1 - allele_depth_ratio)
+
+    if 0.34 < allele_depth_ratio < 0.5:
+        return [(2 * allele_depth_ratio - 1) / (allele_depth_ratio - 1), (1 / allele_depth_ratio) - 2, 1 - 2 * allele_depth_ratio]
+    elif allele_depth_ratio <= 0.34:
+        return [(2 * allele_depth_ratio - 1) / (allele_depth_ratio - 1), 0.95, 1 - 2 * allele_depth_ratio]
+    elif 0.5 < allele_depth_ratio < 0.66:
+        return [2 - (1 / allele_depth_ratio), (2 * allele_depth_ratio - 1) / (1 - allele_depth_ratio), 2 * allele_depth_ratio - 1]
     else:
-        # type 3
-        if allele_depth_ratio > 0.5:
-            return 2 * allele_depth_ratio - 1
-        else:
-            return 1 - 2 * allele_depth_ratio
+        return [2 - (1 / allele_depth_ratio), 0.95, 2 * allele_depth_ratio - 1]
 
 
 def y_mosaicism_detector(edge_detection_results, mat_rd, pat_rd):

@@ -211,7 +211,7 @@ def runner(child_name, father_name, mother_name, sample_size, t_threshold, chr_s
             return edge_detection_results + y_mosaicism_detector_results
         else:
             quantification_results = mosaicism_quantifier(maternal_rd, paternal_rd, edge_detection_results[2], edge_detection_results[3], father_total_rd, mother_total_rd)
-            return edge_detection_results + y_mosaicism_detector_results + quantification_results
+            return edge_detection_results + y_mosaicism_detector_results + quantification_results + [maternal_rd, paternal_rd]
 
 def mosaicism_quantifier(mat_rd, pat_rd, start_region_index, end_region_index, father_total_rd, mother_total_rd):
     # Step 1: Extract mosaic region
@@ -221,19 +221,8 @@ def mosaicism_quantifier(mat_rd, pat_rd, start_region_index, end_region_index, f
     dad_rd_sum = mosaic_region_dad.sum()
     mom_rd_sum = mosaic_region_mom.sum()
     mat_allele_depth_ratio = mom_rd_sum / (mom_rd_sum + dad_rd_sum)
-    # TODO Step 3: Classify type of mosaicism
-    father_mosaic_region_total_rd = father_total_rd.sum()
-    mother_mosaic_region_total_rd = mother_total_rd.sum()
-    if father_mosaic_region_total_rd == 1.0:
-        mosaic_type = 1
-    elif father_mosaic_region_total_rd == 0.75:
-        mosaic_type = 2
-    else:
-        mosaic_type = 3
     # Step 4: Obtain fraction of mosaicism
     mosaic_percentage = mosaicism_quantification(mat_allele_depth_ratio)
-    # Step 5: return results
-    mosaic_percentage.append(mosaic_type)
     return mosaic_percentage
 
 def mosaicism_quantification(allele_depth_ratio):
@@ -299,4 +288,61 @@ def no_classifier_t_test(maternal_rd, paternal_rd, samp_size=10000):
             t_values.append(abs(moments[0] / (moments[1] ** 0.5 / samp_size)))
         return t_values
 
+def mosaicism_classification_function(mosaicism_outcome, vcf_file, dad_name, mom_name):
+    # Step 4a: First check if any are not None
+    any_mosaicism = any(elem is not None for elem in mosaicism_outcome)
+    if not any_mosaicism:
+        return None
+    else:
+        # There is at least one detected area of mosaicism
+        # Step 4b: If so, generate a list of 22 zeros
+        classification_results = [0 for elem in range(22)]
+        # Step 4c: Generate a dictionary of VCF lines by chromosome
+        vcf_file_by_chr = dict(tuple(vcf_file.groupby(['#CHROM'])))
+        # Step 4d: Obtain average read depth for each parent for each chromosome
+        read_depth_averages = [avg_read_depth_finder(vcf_file_by_chr[chr_name], mom_name, dad_name) for chr_name in range(1, 23)]
+        # Step 4e: Obtain overall average read depth per parent
+        dad_avg_read_depths = [elem[0] for elem in read_depth_averages]
+        mom_avg_read_depths = [elem[1] for elem in read_depth_averages]
+        dad_grand_avg = sum(dad_avg_read_depths)/len(dad_avg_read_depths)
+        mom_grand_avg = sum(mom_avg_read_depths)/len(mom_avg_read_depths)
+        # Step 4f: For each elem in mosaicism_outcome, if not None, determine most likely type of mosaicism
+        for i, elem in enumerate(mosaicism_outcome):
+            if elem is not None:
+                # TODO: classification_results[i] = classification_determiner(heh)
+        return classification_results
 
+def classification_determiner(paternal_rd, maternal_rd, start_index, end_index, paternal_total_avg_rd, maternal_total_avg_rd):
+    # I need to know the child's read depths in the mosaic region, the dad's total avg read depth, the mom's total avg
+    # read depth
+    dad_rd_individual_chr_avg = paternal_total_avg_rd / 2
+    mom_rd_individual_chr_avg = maternal_total_avg_rd / 2
+    child_paternal_rd_avg =
+
+    # Obtain results for disomy-UDP
+
+    # Obtain results for disomy-trisomy
+
+    # Obtain results for disomy-monosomy
+
+def avg_read_depth_finder(vcf_lines, mom_name, dad_name):
+    dad_mean = 0.0
+    mom_mean = 0.0
+    n = 1
+    for row in vcf_lines.itertuples(index=False):
+        mom_line_info = getattr(row, mom_name).split(':', 2)
+        dad_line_info = getattr(row, dad_name).split(':', 2)
+        mom_geno_count = Counter(mom_line_info[0])
+        dad_geno_count = Counter(dad_line_info[0])
+        if not (dad_geno_count['.'] or mom_geno_count['.']):
+            dad_read_depths = dad_line_info[1].split(',', 2)
+            dad_rd_first = int(dad_read_depths[0])
+            dad_rd_second = int(dad_read_depths[1])
+            mom_read_depths = mom_line_info[1].split(',', 2)
+            mom_rd_first = int(mom_read_depths[0])
+            mom_rd_second = int(mom_read_depths[1])
+            # increment the means
+            dad_mean += (dad_rd_first + dad_rd_second - dad_mean) / n
+            mom_mean += (mom_rd_first + mom_rd_second - mom_mean) / n
+            n += 1
+    return dad_mean, mom_mean

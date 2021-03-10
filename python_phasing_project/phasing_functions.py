@@ -46,8 +46,6 @@ def phasable_snp_determiner(chr_df, proband_name, father_name, mother_name):
     pos_final = []
     dad_rd_final = []
     mom_rd_final = []
-    father_total_read_depth = []
-    mother_total_read_depth = []
     het_set = {"0/1", "1/0", "1|0", "0|1"}
 
     for row in chr_df.itertuples(index=False):
@@ -71,16 +69,8 @@ def phasable_snp_determiner(chr_df, proband_name, father_name, mother_name):
                         child_rd_first = int(child_read_depths[0])
                         child_rd_second = int(child_read_depths[1])
                         if (4 < child_rd_first < 75) and (4 < child_rd_second < 75):
-                            dad_read_depths = dad_line_info[1].split(',', 2)
-                            dad_rd_first = int(dad_read_depths[0])
-                            dad_rd_second = int(dad_read_depths[1])
-                            mom_read_depths = mom_line_info[1].split(',', 2)
-                            mom_rd_first = int(mom_read_depths[0])
-                            mom_rd_second = int(mom_read_depths[1])
                             # save the position number and then the read depth for the child
                             pos_final.append(getattr(row, 'POS'))
-                            father_total_read_depth.append(dad_rd_first + dad_rd_second)
-                            mother_total_read_depth.append(mom_rd_first + mom_rd_second)
                             # case 1: Dad is a het
                             if is_dad_het:
                                 if is_mom_hom_ref:
@@ -133,7 +123,7 @@ def phasable_snp_determiner(chr_df, proband_name, father_name, mother_name):
                                     dad_rd_final.append(child_rd_first)
                                     mom_rd_final.append(child_rd_second)
 
-    return pos_final, np.array(mom_rd_final), np.array(dad_rd_final), np.array(father_total_read_depth), np.array(mother_total_read_depth)
+    return pos_final, np.array(mom_rd_final), np.array(dad_rd_final)
 
 
 def edge_detection(sample_size, estimated_start_index, estimated_end_index, paternal_rd_array, maternal_rd_array,
@@ -194,7 +184,7 @@ def edge_detection(sample_size, estimated_start_index, estimated_end_index, pate
 
 def runner(child_name, father_name, mother_name, sample_size, t_threshold, chr_snp_df, edge_detection_width):
     # step 1: do phasing
-    vcf_pos, maternal_rd, paternal_rd, father_total_rd, mother_total_rd = phasable_snp_determiner(chr_snp_df, child_name, father_name, mother_name)
+    vcf_pos, maternal_rd, paternal_rd = phasable_snp_determiner(chr_snp_df, child_name, father_name, mother_name)
     # step 2: determine if mosaicism is present
     mosaicism_initial_survey_results = sandia_t_test_snps(maternal_rd, paternal_rd, samp_size=sample_size,
                                                           t_thres=t_threshold)
@@ -210,10 +200,10 @@ def runner(child_name, father_name, mother_name, sample_size, t_threshold, chr_s
         if y_mosaicism_detector_results[0] == 1:
             return edge_detection_results + y_mosaicism_detector_results
         else:
-            quantification_results = mosaicism_quantifier(maternal_rd, paternal_rd, edge_detection_results[2], edge_detection_results[3], father_total_rd, mother_total_rd)
-            return edge_detection_results + y_mosaicism_detector_results + quantification_results + [maternal_rd, paternal_rd]
+            quantification_results = mosaicism_quantifier(maternal_rd, paternal_rd, edge_detection_results[2], edge_detection_results[3])
+            return edge_detection_results + y_mosaicism_detector_results + quantification_results + [paternal_rd, maternal_rd]
 
-def mosaicism_quantifier(mat_rd, pat_rd, start_region_index, end_region_index, father_total_rd, mother_total_rd):
+def mosaicism_quantifier(mat_rd, pat_rd, start_region_index, end_region_index):
     # Step 1: Extract mosaic region
     mosaic_region_dad = pat_rd[start_region_index:end_region_index]
     mosaic_region_mom = mat_rd[start_region_index:end_region_index]
@@ -223,6 +213,8 @@ def mosaicism_quantifier(mat_rd, pat_rd, start_region_index, end_region_index, f
     mat_allele_depth_ratio = mom_rd_sum / (mom_rd_sum + dad_rd_sum)
     # Step 4: Obtain fraction of mosaicism
     mosaic_percentage = mosaicism_quantification(mat_allele_depth_ratio)
+    #mosaicism_type = classification_determiner(pat_rd, mat_rd, start_region_index, end_region_index, father_total_rd, mother_total_rd)
+    #mosaic_percentage.append(mosaicism_type)
     return mosaic_percentage
 
 def mosaicism_quantification(allele_depth_ratio):
@@ -291,6 +283,7 @@ def no_classifier_t_test(maternal_rd, paternal_rd, samp_size=10000):
 def mosaicism_classification_function(mosaicism_outcome, vcf_file, dad_name, mom_name):
     # Step 4a: First check if any are not None
     any_mosaicism = any(elem is not None for elem in mosaicism_outcome)
+    print(any_mosaicism)
     if not any_mosaicism:
         return None
     else:
@@ -308,8 +301,8 @@ def mosaicism_classification_function(mosaicism_outcome, vcf_file, dad_name, mom
         mom_grand_avg = sum(mom_avg_read_depths)/len(mom_avg_read_depths)
         # Step 4f: For each elem in mosaicism_outcome, if not None, determine most likely type of mosaicism
         for i, elem in enumerate(mosaicism_outcome):
-            if elem is not None:
-                # TODO: classification_results[i] = classification_determiner(heh)
+            if (elem is not None) and (elem[5] == 0):
+                classification_results[i] = classification_determiner(elem[9], elem[10], elem[2], elem[3], dad_grand_avg, mom_grand_avg)
         return classification_results
 
 def classification_determiner(paternal_rd, maternal_rd, start_index, end_index, paternal_total_avg_rd, maternal_total_avg_rd):
@@ -317,13 +310,31 @@ def classification_determiner(paternal_rd, maternal_rd, start_index, end_index, 
     # read depth
     dad_rd_individual_chr_avg = paternal_total_avg_rd / 2
     mom_rd_individual_chr_avg = maternal_total_avg_rd / 2
-    child_paternal_rd_avg =
+    child_paternal_rd_avg = paternal_rd[start_index:end_index].mean()
+    child_maternal_rd_avg = maternal_rd[start_index:end_index].mean()
+
+    results_list = [0, 0, 0, 0, 0, 0]
 
     # Obtain results for disomy-UDP
+    results_list[0] = abs(child_maternal_rd_avg - 2*mom_rd_individual_chr_avg)
+    results_list[1] = abs(child_paternal_rd_avg - 2*dad_rd_individual_chr_avg)
 
     # Obtain results for disomy-trisomy
+    results_list[2] = abs(child_maternal_rd_avg - 3*mom_rd_individual_chr_avg)
+    results_list[3] = abs(child_paternal_rd_avg - 3*dad_rd_individual_chr_avg)
 
     # Obtain results for disomy-monosomy
+    results_list[4] = abs(child_maternal_rd_avg - mom_rd_individual_chr_avg)
+    results_list[5] = abs(child_paternal_rd_avg - dad_rd_individual_chr_avg)
+    print(results_list)
+    index_of_min = results_list.index(min(results_list))
+    if index_of_min in {0,1}:
+        return 3
+    elif index_of_min in {2,3}:
+        return 2
+    else:
+        return 1
+
 
 def avg_read_depth_finder(vcf_lines, mom_name, dad_name):
     dad_mean = 0.0
@@ -342,7 +353,9 @@ def avg_read_depth_finder(vcf_lines, mom_name, dad_name):
             mom_rd_first = int(mom_read_depths[0])
             mom_rd_second = int(mom_read_depths[1])
             # increment the means
-            dad_mean += (dad_rd_first + dad_rd_second - dad_mean) / n
-            mom_mean += (mom_rd_first + mom_rd_second - mom_mean) / n
+            dad_mean += dad_rd_first + dad_rd_second
+            mom_mean += mom_rd_first + mom_rd_second
             n += 1
+    dad_mean = dad_mean/n
+    mom_mean = mom_mean/n
     return dad_mean, mom_mean

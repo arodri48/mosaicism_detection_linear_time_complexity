@@ -22,6 +22,7 @@ def main(config_file_path):
                                                   int(config_elem["SAMPLE_SIZE"]), float(config_elem["T_THRES"]),
                                                   snp_chr_dict[chr_name], float(config_elem["EDGE_DETECTION_WIDTH"])) for chr_name in
                          range(1, 23)]
+    print(mosaicism_outcome)
     # Step 4: If any mosaicism is detected, classify it
     # Step 4a: First check if any are not None
     # Step 4b: If so, generate a list of 22 zeros
@@ -30,7 +31,8 @@ def main(config_file_path):
     # Step 4e: Obtain overall average read depth per parent
     # Step 4f: For each elem in mosaicism_outcome, if not None, determine most likely type of mosaicism
 
-    #mosaicism_classification = phasing_functions.mosaicism_classification_function(mosaicism_outcome, vcf_file, names[0], names[1])
+    mosaicism_classification = phasing_functions.mosaicism_classification_function(mosaicism_outcome, vcf_file, names[0], names[1])
+    print(mosaicism_classification)
 
     # Step 4: Write results to file
     with open(config_elem["OUTPUT_FILE"], 'w') as output_file:
@@ -40,9 +42,9 @@ def main(config_file_path):
         output_file.write("\n")
         for i, elem in enumerate(mosaicism_outcome, start=1):
             if elem is not None:
-                print(elem)
+                #print(elem)
                 if elem[5] == 0:
-                    output_file.write("\t".join([str(i), str(elem[0]), str(elem[1]), str(elem[5]), "N/A", "N/A", "Uncertain", str(elem[6]), str(elem[7]), str(elem[8])]))
+                    output_file.write("\t".join([str(i), str(elem[0]), str(elem[1]), str(elem[5]), "N/A", "N/A", str(mosaicism_classification[i-1]), str(elem[6]), str(elem[7]), str(elem[8])]))
                 else:
                     # y shaped mosaicism is present
                     output_file.write("\t".join([str(i), str(elem[0]), str(elem[1]), str(elem[5]), str(elem[6]), str(elem[7]), "N/A", "N/A", "N/A", "N/A"]))

@@ -3,7 +3,7 @@ import numpy as np
 import sandia_stats
 from math import floor
 from scipy import stats
-
+import builtins
 
 def sandia_t_test_snps(maternal_rd, paternal_rd, samp_size=10000, t_thres=25):
     mom_minus_samp_size = maternal_rd.size - samp_size
@@ -22,10 +22,11 @@ def sandia_t_test_snps(maternal_rd, paternal_rd, samp_size=10000, t_thres=25):
         # Step 5: Calculate t-values for rest of positions
         counter2 = samp_size
         mom_update_func = sandia_stats.m1_m2_moment_updater
+        abs_func = builtins.abs
         for i in range(mom_minus_samp_size):
             moments = mom_update_func(moments, diff_arr[i], diff_arr[counter2], samp_size)
             counter2 += 1
-            t_values.append(abs(moments[0] / (moments[1] ** 0.5 / samp_size)))
+            t_values.append(abs_func(moments[0] / (moments[1] ** 0.5 / samp_size)))
         # Step 6: See if any t-values exceed the t-value threshold
         index_of_mosaicism = next((i for i, elem in enumerate(t_values) if elem > t_thres), -1)
         if index_of_mosaicism != -1:
@@ -48,16 +49,20 @@ def phasable_snp_determiner(chr_df, proband_name, father_name, mother_name):
     mom_rd_final = []
     het_set = {"0/1", "1/0", "1|0", "0|1"}
 
+    int_func = builtins.int
+    len_func = builtins.len
+    getattr_func = builtins.getattr
+
     for row in chr_df.itertuples(index=False):
-        child_info = getattr(row, proband_name).split(':', 2)
+        child_info = getattr_func(row, proband_name).split(':', 2)
         if child_info[0] in het_set:
-            mom_line_info = getattr(row, mother_name).split(':', 2)
-            dad_line_info = getattr(row, father_name).split(':', 2)
+            mom_line_info = getattr_func(row, mother_name).split(':', 2)
+            dad_line_info = getattr_func(row, father_name).split(':', 2)
             mom_geno_count = Counter(mom_line_info[0])
             dad_geno_count = Counter(dad_line_info[0])
             # quickly check if both parents are het, if so, not phasable
-            is_dad_het = 3 == len(dad_geno_count)
-            is_mom_het = 3 == len(mom_geno_count)
+            is_dad_het = 3 == len_func(dad_geno_count)
+            is_mom_het = 3 == len_func(mom_geno_count)
             if not (is_dad_het and is_mom_het):
                 if not (dad_geno_count['.'] or mom_geno_count['.']):
                     is_mom_hom_ref = 2 == mom_geno_count['0']
@@ -66,11 +71,11 @@ def phasable_snp_determiner(chr_df, proband_name, father_name, mother_name):
                     is_dad_hom_var = 2 == dad_geno_count['1']
                     if not ((is_mom_hom_ref and is_dad_hom_ref) or (is_mom_hom_var and is_dad_hom_var)):
                         child_read_depths = child_info[1].split(',', 2)
-                        child_rd_first = int(child_read_depths[0])
-                        child_rd_second = int(child_read_depths[1])
+                        child_rd_first = int_func(child_read_depths[0])
+                        child_rd_second = int_func(child_read_depths[1])
                         if (4 < child_rd_first < 75) and (4 < child_rd_second < 75):
                             # save the position number and then the read depth for the child
-                            pos_final.append(getattr(row, 'POS'))
+                            pos_final.append(getattr_func(row, 'POS'))
                             # case 1: Dad is a het
                             if is_dad_het:
                                 if is_mom_hom_ref:
@@ -141,13 +146,15 @@ def edge_detection(sample_size, estimated_start_index, estimated_end_index, pate
 
     final_index = paternal_rd_array.size - 1
     is_mosaicism_to_the_end = estimated_end_index == final_index
+
+    abs_func = builtins.abs
     # case 1: whole chromosome is mosaic
     if not estimated_start_index and is_mosaicism_to_the_end:
         return [vcf_pos[0], vcf_pos[final_index], 0, final_index, height]
     # case 2: mosaicism starts and beginning and ends in the middle
     elif not (estimated_start_index or is_mosaicism_to_the_end):
         center_index = estimated_end_index - floor(0.5 * sample_size)
-        filter_difference = [abs((diff_arr[
+        filter_difference = [abs_func((diff_arr[
                                   center_index - filter_width_one_side + i: center_index + filter_width_one_side + i] - backward_filter).sum(
             dtype=float)) for i in range(sample_size)]
         min_val = min(filter_difference)
@@ -156,7 +163,7 @@ def edge_detection(sample_size, estimated_start_index, estimated_end_index, pate
     # case 3: mosaicism starts in middle and ends at the telomere
     elif estimated_start_index and is_mosaicism_to_the_end:
         center_index = estimated_start_index - floor(0.5 * sample_size)
-        filter_difference = [abs((diff_arr[
+        filter_difference = [abs_func((diff_arr[
                                   center_index - filter_width_one_side + i: center_index + filter_width_one_side + i] - forward_filter).sum(
             dtype=float)) for i in range(sample_size)]
         min_val = min(filter_difference)
@@ -165,13 +172,13 @@ def edge_detection(sample_size, estimated_start_index, estimated_end_index, pate
     # case 4: mosaicism starts and ends somewhere in teh middle
     else:
         center_start_index = estimated_start_index - floor(0.5 * sample_size)
-        filter_start_difference = [abs((diff_arr[
+        filter_start_difference = [abs_func((diff_arr[
                                         center_start_index - filter_width_one_side + i: center_start_index + filter_width_one_side + i] - forward_filter).sum(
             dtype=float)) for i in range(sample_size)]
         min_start_val = min(filter_start_difference)
 
         center_end_index = estimated_end_index - floor(0.5 * sample_size)
-        filter_end_difference = [abs((diff_arr[
+        filter_end_difference = [abs_func((diff_arr[
                                       center_end_index - filter_width_one_side + i:center_end_index + filter_width_one_side + i] - backward_filter).sum(
             dtype=float)) for i in range(sample_size)]
         min_end_val = min(filter_end_difference)
@@ -274,10 +281,11 @@ def no_classifier_t_test(maternal_rd, paternal_rd, samp_size=10000):
         # Step 5: Calculate t-values for rest of positions
         counter2 = samp_size
         mom_update_func = sandia_stats.m1_m2_moment_updater
+        abs_func = builtins.abs
         for i in range(mom_minus_samp_size):
             moments = mom_update_func(moments, diff_arr[i], diff_arr[counter2], samp_size)
             counter2 += 1
-            t_values.append(abs(moments[0] / (moments[1] ** 0.5 / samp_size)))
+            t_values.append(abs_func(moments[0] / (moments[1] ** 0.5 / samp_size)))
         return t_values
 
 def mosaicism_classification_function(mosaicism_outcome, vcf_file, dad_name, mom_name):
@@ -340,18 +348,20 @@ def avg_read_depth_finder(vcf_lines, mom_name, dad_name):
     dad_mean = 0.0
     mom_mean = 0.0
     n = 1
+    getattr_func = builtins.getattr
+    int_func = builtins.int
     for row in vcf_lines.itertuples(index=False):
-        mom_line_info = getattr(row, mom_name).split(':', 2)
-        dad_line_info = getattr(row, dad_name).split(':', 2)
+        mom_line_info = getattr_func(row, mom_name).split(':', 2)
+        dad_line_info = getattr_func(row, dad_name).split(':', 2)
         mom_geno_count = Counter(mom_line_info[0])
         dad_geno_count = Counter(dad_line_info[0])
         if not (dad_geno_count['.'] or mom_geno_count['.']):
             dad_read_depths = dad_line_info[1].split(',', 2)
-            dad_rd_first = int(dad_read_depths[0])
-            dad_rd_second = int(dad_read_depths[1])
+            dad_rd_first = int_func(dad_read_depths[0])
+            dad_rd_second = int_func(dad_read_depths[1])
             mom_read_depths = mom_line_info[1].split(',', 2)
-            mom_rd_first = int(mom_read_depths[0])
-            mom_rd_second = int(mom_read_depths[1])
+            mom_rd_first = int_func(mom_read_depths[0])
+            mom_rd_second = int_func(mom_read_depths[1])
             # increment the means
             dad_mean += dad_rd_first + dad_rd_second
             mom_mean += mom_rd_first + mom_rd_second

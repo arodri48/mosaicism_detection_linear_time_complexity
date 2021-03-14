@@ -52,14 +52,15 @@ def phasable_snp_determiner(chr_df, proband_name, father_name, mother_name):
     int_func = builtins.int
     len_func = builtins.len
     getattr_func = builtins.getattr
+    counter_class = Counter
 
     for row in chr_df.itertuples(index=False):
         child_info = getattr_func(row, proband_name).split(':', 2)
         if child_info[0] in het_set:
             mom_line_info = getattr_func(row, mother_name).split(':', 2)
             dad_line_info = getattr_func(row, father_name).split(':', 2)
-            mom_geno_count = Counter(mom_line_info[0])
-            dad_geno_count = Counter(dad_line_info[0])
+            mom_geno_count = counter_class(mom_line_info[0])
+            dad_geno_count = counter_class(dad_line_info[0])
             # quickly check if both parents are het, if so, not phasable
             is_dad_het = 3 == len_func(dad_geno_count)
             is_mom_het = 3 == len_func(mom_geno_count)

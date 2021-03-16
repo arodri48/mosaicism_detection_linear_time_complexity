@@ -300,7 +300,6 @@ def no_classifier_t_test(maternal_rd, paternal_rd, samp_size=10000):
 def mosaicism_classification_function(mosaicism_outcome, vcf_file, dad_name, mom_name):
     # Step 4a: First check if any are not None
     any_mosaicism = any(elem is not None for elem in mosaicism_outcome)
-    print(any_mosaicism)
     if not any_mosaicism:
         return None
     else:
@@ -349,7 +348,6 @@ def classification_determiner(paternal_rd, maternal_rd, start_index, end_index, 
     # Obtain results for disomy-monosomy
     results_list[4] = abs(child_avg_rd_mosaic_region - mom_rd_individual_chr_avg)
     results_list[5] = abs(child_avg_rd_mosaic_region - dad_rd_individual_chr_avg)
-    print(results_list)
     index_of_min = results_list.index(min(results_list))
     if index_of_min in {0, 1}:
         return 3

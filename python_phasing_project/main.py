@@ -38,7 +38,7 @@ def main(config_file_path):
     with open(config_elem["OUTPUT_FILE"], 'w') as output_file:
         output_file.write(" ".join(["Mosaicism results for", config_elem["PROBAND_NAME"]]))
         output_file.write("\n")
-        output_file.write("\t".join(["chr_number", "VCF_start", "VCF_end", "Y-Shaped_Mosaicism_present", "Slope", "Start_of_Y-Shaped_Mosaicism", "Most_Likely_Mosaic_Model", "Fraction_Under_Mono_Disomy(1)", "Fraction_Under_Tri_Disomy(2)", "Fraction_Under_UPD_Disomy(3)"]))
+        output_file.write("\t".join(["chr_number", "VCF_start", "VCF_end", "Y-Shaped_Mosaicism_present", "Slope", "Start_of_Y-Shaped_Mosaicism", "Possible_Model_Of_Mosaicism", "Fraction_Under_Mono_Di_Model(1)", "Fraction_Under_Tri_Di_Model(2)", "Fraction_Under_UPD_Di_Model(3)"]))
         output_file.write("\n")
         for i, elem in enumerate(mosaicism_outcome, start=1):
             if elem is not None:
@@ -51,5 +51,5 @@ def main(config_file_path):
                 output_file.write("\n")
 
 
-
-main('phasing_config_file.txt')
+if __name__ == "__main__":
+    main('phasing_config_file.txt')

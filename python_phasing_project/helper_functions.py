@@ -21,7 +21,7 @@ def SNP_filter(df):
 
 def ped_file_reader(ped_file_path):
     with open(ped_file_path, 'r') as f:
-        names = [l.strip().split('\t')[1] for l in f]
+        names = [line.strip().split('\t')[1] for line in f]
     actual_names = [names[1], names[2], names[0]]
     for i in range(3, len(names)):
         actual_names.append(names[i])
